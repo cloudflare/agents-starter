@@ -107,7 +107,7 @@ export default function Chat() {
               <div className="message-header">
                 <span className="message-role">{m.role}</span>
                 <span className="message-time">
-                  {new Date().toLocaleTimeString()}
+                  {new Date(m.createdAt).toLocaleTimeString()}
                 </span>
               </div>
               {m.parts?.map((part, i) => {
