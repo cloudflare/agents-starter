@@ -4,12 +4,24 @@ import { useAgentChat } from "agents/ai-react";
 import type { Message } from "@ai-sdk/react";
 import { APPROVAL } from "./shared";
 import type { tools } from "./tools";
-import { Button } from "./components/ui/button";
-import { Card } from "./components/ui/card";
-import { Input } from "./components/ui/input";
-import { Avatar, AvatarFallback } from "./components/ui/avatar";
-import { Switch } from "./components/ui/switch";
-import { Send, Bot, Trash2, Sun, Moon, Bug } from "lucide-react";
+
+// Component imports
+import { Button } from "./components/button/Button";
+import { Card } from "./components/card/Card";
+import { Input } from "./components/input/Input";
+import { Avatar } from "@/components/avatar/Avatar";
+import { Toggle } from "@/components/toggle/Toggle";
+import { Tooltip } from "@/components/tooltip/Tooltip";
+
+// Icon imports
+import {
+  Bug,
+  Moon,
+  PaperPlaneRight,
+  Robot,
+  Sun,
+  Trash,
+} from "@phosphor-icons/react";
 
 // List of tools that require human confirmation
 const toolsRequiringConfirmation: (keyof typeof tools)[] = [
@@ -90,9 +102,9 @@ export default function Chat() {
   };
 
   return (
-    <div className="h-[100vh] w-full bg-gradient-to-br from-[#F48120]/10 via-background/30 to-[#FAAD3F]/10 backdrop-blur-md p-4 flex justify-center items-center bg-fixed overflow-hidden">
-      <div className="bg-background h-[calc(100vh-2rem)] w-full mx-auto max-w-lg flex flex-col shadow-xl rounded-md overflow-hidden relative border border-assistant-border/20">
-        <div className="px-4 py-3 border-b border-border flex items-center gap-3 bg-background sticky top-0 z-10">
+    <div className="h-[100vh] w-full p-4 flex justify-center items-center bg-fixed overflow-hidden">
+      <div className="h-[calc(100vh-2rem)] w-full mx-auto max-w-lg flex flex-col shadow-xl rounded-md overflow-hidden relative border border-neutral-300 dark:border-neutral-800">
+        <div className="px-4 py-3 border-b border-neutral-300 dark:border-neutral-800 flex items-center gap-3 sticky top-0 z-10">
           <div className="flex items-center justify-center h-8 w-8">
             <svg
               width="28px"
@@ -116,35 +128,32 @@ export default function Chat() {
           </div>
 
           <div className="flex items-center gap-2 mr-2">
-            <Bug className="h-4 w-4 text-muted-foreground/50 dark:text-gray-500" />
-            <Switch
-              checked={showDebug}
-              onCheckedChange={setShowDebug}
+            <Bug size={16} />
+            <Toggle
+              toggled={showDebug}
               aria-label="Toggle debug mode"
-              className="data-[state=checked]:bg-gray-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=unchecked]:bg-gray-700"
+              onClick={() => setShowDebug((prev) => !prev)}
             />
           </div>
 
           <Button
             variant="ghost"
-            size="icon"
+            size="md"
+            shape="square"
             className="rounded-full h-9 w-9"
             onClick={toggleTheme}
           >
-            {theme === "dark" ? (
-              <Sun className="h-5 w-5" />
-            ) : (
-              <Moon className="h-5 w-5" />
-            )}
+            {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
           </Button>
 
           <Button
             variant="ghost"
-            size="icon"
+            size="md"
+            shape="square"
             className="rounded-full h-9 w-9"
             onClick={clearHistory}
           >
-            <Trash2 className="h-5 w-5" />
+            <Trash size={20} />
           </Button>
         </div>
 
@@ -152,10 +161,10 @@ export default function Chat() {
         <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-24 max-h-[calc(100vh-10rem)]">
           {agentMessages.length === 0 && (
             <div className="h-full flex items-center justify-center">
-              <Card className="bg-secondary/30 border-secondary/50 p-6 max-w-md mx-auto">
+              <Card className="p-6 max-w-md mx-auto bg-neutral-100 dark:bg-neutral-900">
                 <div className="text-center space-y-4">
                   <div className="bg-[#F48120]/10 text-[#F48120] rounded-full p-3 inline-flex">
-                    <Bot className="h-6 w-6" />
+                    <Robot size={24} />
                   </div>
                   <h3 className="font-semibold text-lg">Welcome to AI Chat</h3>
                   <p className="text-muted-foreground text-sm">
@@ -199,11 +208,7 @@ export default function Chat() {
                     }`}
                   >
                     {showAvatar && !isUser ? (
-                      <Avatar className="h-8 w-8 mt-1 flex-shrink-0">
-                        <AvatarFallback className="bg-[#F48120] text-white">
-                          AI
-                        </AvatarFallback>
-                      </Avatar>
+                      <Avatar username={"AI"} />
                     ) : (
                       !isUser && <div className="w-8" />
                     )}
@@ -216,9 +221,9 @@ export default function Chat() {
                               // biome-ignore lint/suspicious/noArrayIndexKey: it's fine here
                               <div key={i}>
                                 <Card
-                                  className={`p-3 rounded-md ${
+                                  className={`p-3 rounded-md bg-neutral-100 dark:bg-neutral-900 ${
                                     isUser
-                                      ? "bg-primary text-primary-foreground rounded-br-none"
+                                      ? "rounded-br-none"
                                       : "rounded-bl-none border-assistant-border"
                                   } ${
                                     part.text.startsWith("scheduled message")
@@ -267,11 +272,14 @@ export default function Chat() {
                                 <Card
                                   // biome-ignore lint/suspicious/noArrayIndexKey: it's fine here
                                   key={i}
-                                  className="p-4 my-3 bg-secondary/30 border-secondary/50 rounded-md"
+                                  className="p-4 my-3 rounded-md bg-neutral-100 dark:bg-neutral-900"
                                 >
                                   <div className="flex items-center gap-2 mb-3">
                                     <div className="bg-[#F48120]/10 p-1.5 rounded-full">
-                                      <Bot className="h-4 w-4 text-[#F48120]" />
+                                      <Robot
+                                        size={16}
+                                        className="text-[#F48120]"
+                                      />
                                     </div>
                                     <h4 className="font-medium">
                                       {toolInvocation.toolName}
@@ -293,7 +301,7 @@ export default function Chat() {
 
                                   <div className="flex gap-2 justify-end">
                                     <Button
-                                      variant="outline"
+                                      variant="primary"
                                       size="sm"
                                       onClick={() =>
                                         addToolResult({
@@ -304,18 +312,20 @@ export default function Chat() {
                                     >
                                       Reject
                                     </Button>
-                                    <Button
-                                      variant="default"
-                                      size="sm"
-                                      onClick={() =>
-                                        addToolResult({
-                                          toolCallId,
-                                          result: APPROVAL.YES,
-                                        })
-                                      }
-                                    >
-                                      Approve
-                                    </Button>
+                                    <Tooltip content={"Accept action"}>
+                                      <Button
+                                        variant="primary"
+                                        size="sm"
+                                        onClick={() =>
+                                          addToolResult({
+                                            toolCallId,
+                                            result: APPROVAL.YES,
+                                          })
+                                        }
+                                      >
+                                        Approve
+                                      </Button>
+                                    </Tooltip>
                                   </div>
                                 </Card>
                               );
@@ -323,15 +333,6 @@ export default function Chat() {
                             return null;
                           }
                           return null;
-                          // return (
-                          //   <div key={i}>
-                          //     <Card className="p-3 rounded-2xl bg-secondary border-secondary">
-                          //       <pre className="text-xs">
-                          //         {JSON.stringify(part, null, 2)}
-                          //       </pre>
-                          //     </Card>
-                          //   </div>
-                          // );
                         })}
                       </div>
                     </div>
@@ -354,7 +355,7 @@ export default function Chat() {
               },
             })
           }
-          className="p-3 bg-input-background absolute bottom-0 left-0 right-0 z-10 border-t border-assistant-border/30"
+          className="p-3 bg-input-background absolute bottom-0 left-0 right-0 z-10 border-t border-neutral-300 dark:border-neutral-800"
         >
           <div className="flex items-center gap-2">
             <div className="flex-1 relative">
@@ -365,7 +366,7 @@ export default function Chat() {
                     ? "Please respond to the tool confirmation above..."
                     : "Type your message..."
                 }
-                className="pr-10 py-6 rounded-full bg-muted border-muted"
+                className="pl-4 pr-10 py-2 w-full rounded-full"
                 value={agentInput}
                 onChange={handleAgentInputChange}
                 onKeyDown={(e) => {
@@ -374,16 +375,17 @@ export default function Chat() {
                     handleAgentSubmit(e as unknown as React.FormEvent);
                   }
                 }}
+                onValueChange={undefined}
               />
             </div>
 
             <Button
               type="submit"
-              size="icon"
+              shape="square"
               className="rounded-full h-10 w-10 flex-shrink-0"
               disabled={pendingToolCallConfirmation || !agentInput.trim()}
             >
-              <Send className="h-5 w-5" />
+              <PaperPlaneRight size={16} />
             </Button>
           </div>
         </form>
