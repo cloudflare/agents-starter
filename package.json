@@ -52,6 +52,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.0.2",
+    "workers-ai-provider": "^0.2.0",
     "zod": "^3.24.2"
   }
 }

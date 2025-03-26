@@ -9,6 +9,9 @@
   "assets": {
     "directory": "public",
   },
+  "ai": {
+    "binding": "ai",
+  },
   "durable_objects": {
     "bindings": [
       {

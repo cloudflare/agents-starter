@@ -9,13 +9,13 @@ import {
   streamText,
   type StreamTextOnFinishCallback,
 } from "ai";
-import { openai } from "@ai-sdk/openai";
 import { processToolCalls } from "./utils";
 import { tools, executions } from "./tools";
 import { AsyncLocalStorage } from "node:async_hooks";
+import { createWorkersAI } from "workers-ai-provider";
 // import { env } from "cloudflare:workers";
 
-const model = openai("gpt-4o-2024-11-20");
+// const model = openai("gpt-4o-2024-11-20");
 // Cloudflare AI Gateway
 // const openai = createOpenAI({
 //   apiKey: env.OPENAI_API_KEY,
@@ -50,7 +50,10 @@ export class Chat extends AIChatAgent<Env> {
 
           // Stream the AI response using GPT-4
           const result = streamText({
-            model,
+            model: createWorkersAI({
+              binding: this.env.ai,
+            })("@cf/meta/llama-3.3-70b-instruct-fp8-fast"),
+            // HERE MICHELLE
             system: `You are a helpful assistant that can do various tasks... 
 
 ${unstable_getSchedulePrompt({ date: new Date() })}
@@ -92,12 +95,12 @@ If the user asks to schedule a task, use the schedule tool to schedule the task.
  */
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
-    if (!process.env.OPENAI_API_KEY) {
-      console.error(
-        "OPENAI_API_KEY is not set, don't forget to set it locally in .dev.vars, and use `wrangler secret bulk .dev.vars` to upload it to production"
-      );
-      return new Response("OPENAI_API_KEY is not set", { status: 500 });
-    }
+    // if (!process.env.OPENAI_API_KEY) {
+    //   console.error(
+    //     "OPENAI_API_KEY is not set, don't forget to set it locally in .dev.vars, and use `wrangler secret bulk .dev.vars` to upload it to production"
+    //   );
+    //   return new Response("OPENAI_API_KEY is not set", { status: 500 });
+    // }
     return (
       // Route the request to our agent or return 404 if not found
       (await routeAgentRequest(request, env)) ||
