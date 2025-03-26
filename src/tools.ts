@@ -4,12 +4,9 @@
  */
 import { tool } from "ai";
 import { z } from "zod";
-
-import { agentContext } from "./server";
-import {
-  unstable_getSchedulePrompt,
-  unstable_scheduleSchema,
-} from "agents/schedule";
+import { context } from "agents";
+import { unstable_scheduleSchema } from "agents/schedule";
+import type { Chat } from "./server";
 
 /**
  * Weather information tool that requires human confirmation
@@ -41,7 +38,7 @@ const scheduleTask = tool({
   parameters: unstable_scheduleSchema,
   execute: async ({ when, description }) => {
     // we can now read the agent context from the ALS store
-    const agent = agentContext.getStore();
+    const { agent } = context.getStore() || {};
     if (!agent) {
       throw new Error("No agent found");
     }
@@ -60,7 +57,7 @@ const scheduleTask = tool({
             ? when.cron // cron
             : throwError("not a valid schedule input");
     try {
-      agent.schedule(input!, "executeTask", description);
+      (agent as Chat).schedule(input!, "executeTask", description);
     } catch (error) {
       console.error("error scheduling task", error);
       return `Error scheduling task: ${error}`;
