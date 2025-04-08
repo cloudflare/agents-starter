@@ -26,7 +26,7 @@ export const Select = ({
 
   return (
     <select
-      onPointerDown={(e: React.PointerEvent) => {
+      onPointerDown={(e: React.PointerEvent<HTMLSelectElement>) => {
         if (e.pointerType === "mouse") {
           setIsPointer(true);
         }
