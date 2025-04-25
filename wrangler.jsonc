@@ -23,5 +23,11 @@
       "tag": "v1",
       "new_sqlite_classes": ["Chat"]
     }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "FILE_BUCKET",
+      "bucket_name": "agents-test"
+    }
   ]
 }
