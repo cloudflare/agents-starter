@@ -4,6 +4,7 @@ import { useAgentChat } from "agents/ai-react";
 import type { Message } from "@ai-sdk/react";
 import { APPROVAL } from "./shared";
 import type { tools } from "./tools";
+import { useQueryState } from "nuqs";
 
 // Component imports
 import { Button } from "@/components/button/Button";
@@ -21,7 +22,9 @@ import {
   Robot,
   Sun,
   Trash,
+  FilePlus,
 } from "@phosphor-icons/react";
+import { generateShortId } from "./lib/utils";
 
 // List of tools that require human confirmation
 const toolsRequiringConfirmation: (keyof typeof tools)[] = [
@@ -29,6 +32,7 @@ const toolsRequiringConfirmation: (keyof typeof tools)[] = [
 ];
 
 export default function Chat() {
+  const [ thread, setThread ] = useQueryState("thread");
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     // Check localStorage first, default to dark if not found
     const savedTheme = localStorage.getItem("theme");
@@ -60,13 +64,25 @@ export default function Chat() {
     scrollToBottom();
   }, [scrollToBottom]);
 
+  useEffect(() => {
+    if (thread) return;
+    createNewThread();
+  }, [thread]);
+
   const toggleTheme = () => {
     const newTheme = theme === "dark" ? "light" : "dark";
     setTheme(newTheme);
   };
 
+  const createNewThread = () => {
+    const newThread = generateShortId();
+    setThread(newThread);
+    setMessages([]);
+  };
+
   const agent = useAgent({
     agent: "chat",
+    name: thread ?? undefined,
   });
 
   const {
@@ -76,6 +92,7 @@ export default function Chat() {
     handleSubmit: handleAgentSubmit,
     addToolResult,
     clearHistory,
+    setMessages,
   } = useAgentChat({
     agent,
     maxSteps: 5,
@@ -100,6 +117,10 @@ export default function Chat() {
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
+
+  if (!thread) {
+    return <></>;
+  }
 
   return (
     <div className="h-[100vh] w-full p-4 flex justify-center items-center bg-fixed overflow-hidden">
@@ -152,6 +173,18 @@ export default function Chat() {
             size="md"
             shape="square"
             className="rounded-full h-9 w-9"
+            tooltip={"New Thread"}
+            onClick={createNewThread}
+          >
+            <FilePlus size={20} />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="md"
+            shape="square"
+            className="rounded-full h-9 w-9"
+            tooltip={"Clear History"}
             onClick={clearHistory}
           >
             <Trash size={20} />
