@@ -3731,6 +3731,7 @@ interface AiModels {
     "@cf/meta/llama-3.2-3b-instruct": BaseAiTextGeneration;
     "@cf/meta/llama-3.2-1b-instruct": BaseAiTextGeneration;
     "@cf/meta/llama-3.3-70b-instruct-fp8-fast": BaseAiTextGeneration;
+    "@cf/meta/llama-4-scout-17b-16e-instruct": BaseAiTextGeneration;
     "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b": BaseAiTextGeneration;
     "@cf/meta/m2m100-1.2b": BaseAiTranslation;
     "@cf/facebook/bart-large-cnn": BaseAiSummarization;
