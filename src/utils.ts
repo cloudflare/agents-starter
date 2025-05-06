@@ -127,3 +127,9 @@ export async function processToolCalls<
 //     return typeof maybeTool.execute !== "function";
 //   }) as string[];
 // }
+
+export const getFileExtension = (fileName: string): string => {
+  return fileName
+    .slice(((fileName.lastIndexOf(".") - 1) >>> 0) + 2)
+    .toUpperCase();
+};

@@ -60,7 +60,7 @@ export class Chat extends AIChatAgent<Env> {
         // Stream the AI response using GPT-4
         const result = streamText({
           model,
-          system: `You are a helpful assistant that can do various tasks... 
+          system: `You are a helpful assistant that can do various tasks...
 
 ${unstable_getSchedulePrompt({ date: new Date() })}
 
@@ -106,6 +106,83 @@ If the user asks to schedule a task, use the schedule tool to schedule the task.
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
+
+    if (url.pathname === "/api/upload" && request.method === "POST") {
+      try {
+        const formData = await request.formData();
+        const files = formData.getAll("files") as unknown[];
+        const uploadedAttachments = [];
+
+        if (!env.FILE_BUCKET) {
+          console.error("R2 Bucket 'FILE_BUCKET' is not bound.");
+          return new Response(
+            "Server configuration error: R2 bucket not available.",
+            { status: 500 }
+          );
+        }
+
+        for (const file of files) {
+          if (file instanceof File) {
+            const fileId = generateId();
+            const fileKey = `uploads/${fileId}/${file.name}`;
+
+            await env.FILE_BUCKET.put(fileKey, file.stream() as any, {
+              httpMetadata: { contentType: file.type },
+            });
+
+            const reqUrl = new URL(request.url);
+            const baseUrl = `${reqUrl.protocol}//${reqUrl.host}`;
+            // During development, use ngrok or other services to get a public URL for the file
+            // eg. baseUrl = https://123.ngrok-free.app
+            const fileRetrievalUrl = `${baseUrl}/${fileKey}`;
+
+            uploadedAttachments.push({
+              name: file.name,
+              contentType: file.type,
+              url: fileRetrievalUrl,
+            });
+          }
+        }
+        return Response.json({ attachments: uploadedAttachments });
+      } catch (error) {
+        console.error("Error handling file upload:", error);
+        return new Response("Failed to upload files.", { status: 500 });
+      }
+    }
+
+    if (url.pathname.includes("/uploads/") && request.method === "GET") {
+      try {
+        const parts = url.pathname.split("/");
+        if (parts.length < 4) {
+          return new Response(
+            "Invalid file path format. Expected /uploads/{id}/{filename}",
+            { status: 400 }
+          );
+        }
+        const fileId = parts[2];
+        const fileName = decodeURIComponent(parts.slice(3).join("/"));
+        const fileKey = `uploads/${fileId}/${fileName}`;
+
+        if (!env.FILE_BUCKET) {
+          console.error("R2 Bucket 'FILE_BUCKET' is not bound.");
+          return new Response(
+            "Server configuration error: R2 bucket not available.",
+            { status: 500 }
+          );
+        }
+
+        const object = await env.FILE_BUCKET.get(fileKey);
+
+        if (object === null) {
+          return new Response("File not found.", { status: 404 });
+        }
+
+        return new Response(object.body);
+      } catch (error) {
+        console.error("Error retrieving file:", error);
+        return new Response("Failed to retrieve file.", { status: 500 });
+      }
+    }
 
     if (url.pathname === "/check-open-ai-key") {
       const hasOpenAIKey = !!process.env.OPENAI_API_KEY;

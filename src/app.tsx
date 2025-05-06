@@ -20,13 +20,24 @@ import {
   Robot,
   Sun,
   Trash,
+  X,
+  Paperclip,
   PaperPlaneTilt,
+  PaperPlaneRight,
 } from "@phosphor-icons/react";
+import { getFileExtension } from "./utils";
 
 // List of tools that require human confirmation
 const toolsRequiringConfirmation: (keyof typeof tools)[] = [
   "getWeatherInformation",
 ];
+
+// Attachments type matching Vercel AI SDK
+type Attachment = {
+  name?: string;
+  contentType?: string;
+  url: string;
+};
 
 export default function Chat() {
   const [theme, setTheme] = useState<"dark" | "light">(() => {
@@ -37,6 +48,9 @@ export default function Chat() {
   const [showDebug, setShowDebug] = useState(false);
   const [textareaHeight, setTextareaHeight] = useState("auto");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -100,6 +114,63 @@ export default function Chat() {
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const handleFileSelect = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      const newFiles = Array.from(event.target.files);
+      setAttachedFiles((prevFiles) => {
+        const existingFileNames = new Set(prevFiles.map((f) => f.name));
+        const uniqueNewFiles = newFiles.filter(
+          (f) => !existingFileNames.has(f.name)
+        );
+        return [...prevFiles, ...uniqueNewFiles];
+      });
+      event.target.value = ""; // Clear input to allow selecting the same file again
+    }
+  };
+
+  const removeFile = (fileName: string) => {
+    setAttachedFiles((prevFiles) =>
+      prevFiles.filter((file) => file.name !== fileName)
+    );
+  };
+
+  const uploadFiles = async (files: File[]) => {
+    setIsUploading(true);
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append("files", file);
+    });
+
+    try {
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`File upload failed: ${response.statusText}`);
+      }
+
+      const result: {
+        attachments: Attachment[];
+      } = await response.json();
+
+      return result.attachments;
+    } catch (error) {
+      console.error("Error uploading files:", error);
+      alert(
+        `Failed to upload files: ${error instanceof Error ? error.message : String(error)}`
+      );
+      return [];
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -182,6 +253,10 @@ export default function Chat() {
                       <span className="text-[#F48120]">•</span>
                       <span>Local time in different locations</span>
                     </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-[#F48120]">•</span>
+                      <span>Uploading and discussing files</span>
+                    </li>
                   </ul>
                 </div>
               </Card>
@@ -219,8 +294,65 @@ export default function Chat() {
                         {m.parts?.map((part, i) => {
                           if (part.type === "text") {
                             return (
-                              // biome-ignore lint/suspicious/noArrayIndexKey: immutable index
-                              <div key={i}>
+                              <div key={`text-${i}`}>
+                                {m.experimental_attachments &&
+                                  m.experimental_attachments.length > 0 && (
+                                    <div
+                                      className={`mb-2 space-y-2 ${isUser ? "pl-10" : "pr-10"}`}
+                                    >
+                                      {m.experimental_attachments.map(
+                                        (file) => {
+                                          return (
+                                            <div
+                                              key={file.url + file.name}
+                                              className="flex items-center gap-2"
+                                            >
+                                              {file.contentType?.startsWith(
+                                                "image/"
+                                              ) ? (
+                                                <a
+                                                  href={file.url}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="block max-w-[200px] max-h-[200px] rounded border border-neutral-300 dark:border-neutral-700 overflow-hidden shadow-sm"
+                                                >
+                                                  <img
+                                                    src={file.url}
+                                                    alt={file.name}
+                                                    className="w-full h-full object-cover"
+                                                    loading="lazy"
+                                                  />
+                                                </a>
+                                              ) : (
+                                                <a
+                                                  href={file.url}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  download={file.name}
+                                                  className="inline-flex items-center gap-2 p-2 rounded border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors text-sm"
+                                                >
+                                                  <Paperclip size={16} />
+                                                  <span
+                                                    className="truncate max-w-[150px]"
+                                                    title={file.name}
+                                                  >
+                                                    {file.name}
+                                                  </span>
+                                                  <span className="text-xs text-muted-foreground ml-1">
+                                                    (
+                                                    {getFileExtension(
+                                                      file.name ?? ""
+                                                    )}
+                                                    )
+                                                  </span>
+                                                </a>
+                                              )}
+                                            </div>
+                                          );
+                                        }
+                                      )}
+                                    </div>
+                                  )}
                                 <Card
                                   className={`p-3 rounded-md bg-neutral-100 dark:bg-neutral-900 ${
                                     isUser
@@ -247,15 +379,21 @@ export default function Chat() {
                                     )}
                                   />
                                 </Card>
-                                <p
-                                  className={`text-xs text-muted-foreground mt-1 ${
-                                    isUser ? "text-right" : "text-left"
-                                  }`}
-                                >
-                                  {formatTime(
-                                    new Date(m.createdAt as unknown as string)
-                                  )}
-                                </p>
+                                {(m.parts?.some(
+                                  (p) => p.type === "text" && p.text.trim()
+                                ) ||
+                                  (typeof m.content === "string" &&
+                                    m.content.trim())) && (
+                                  <p
+                                    className={`text-xs text-muted-foreground mt-1 ${
+                                      isUser ? "text-right" : "text-left"
+                                    }`}
+                                  >
+                                    {formatTime(
+                                      new Date(m.createdAt as unknown as string)
+                                    )}
+                                  </p>
+                                )}
                               </div>
                             );
                           }
@@ -296,9 +434,41 @@ export default function Chat() {
 
         {/* Input Area */}
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
+            if (!agentInput.trim() && attachedFiles.length === 0) return;
+            if (isUploading) return;
+
+            let uploadedAttachments: Attachment[] = [];
+
+            if (attachedFiles.length > 0) {
+              uploadedAttachments = await uploadFiles(attachedFiles);
+              console.log("uploadedAttachments", uploadedAttachments);
+
+              // Clear local files only if upload resulted in some valid attachments
+              if (
+                uploadedAttachments.length > 0 ||
+                attachedFiles.length === 0
+              ) {
+                setAttachedFiles([]);
+              }
+
+              // If upload failed completely or returned no valid attachments, stop.
+              if (
+                uploadedAttachments.length === 0 &&
+                attachedFiles.length > 0
+              ) {
+                console.warn(
+                  "File upload failed or returned invalid data, submission stopped."
+                );
+
+                // Optionally alert the user here
+                return; // Stop submission
+              }
+            }
+
             handleAgentSubmit(e, {
+              experimental_attachments: uploadedAttachments,
               data: {
                 annotations: {
                   hello: "world",
@@ -307,18 +477,72 @@ export default function Chat() {
             });
             setTextareaHeight("auto"); // Reset height after submission
           }}
-          className="p-3 bg-neutral-50 absolute bottom-0 left-0 right-0 z-10 border-t border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900"
+          className="p-3 bg-neutral-100 dark:bg-neutral-950 absolute bottom-0 left-0 right-0 z-10 border-t border-neutral-300 dark:border-neutral-800"
         >
+          {attachedFiles.length > 0 && (
+            <div className="flex space-x-2 mb-2 pb-2 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent bg-input-background">
+              {attachedFiles.map((file) => (
+                <div
+                  key={file.name}
+                  className="relative group flex-shrink-0 w-16 h-16 border border-neutral-300 dark:border-neutral-700 rounded-md overflow-hidden bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center"
+                >
+                  {file.type.startsWith("image/") ? (
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={file.name}
+                      className="w-full h-full object-cover"
+                      onLoad={(e) =>
+                        URL.revokeObjectURL((e.target as HTMLImageElement).src)
+                      }
+                    />
+                  ) : (
+                    <span className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+                      {getFileExtension(file.name)}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeFile(file.name)}
+                    disabled={isUploading}
+                    className="absolute top-0.5 right-0.5 p-0.5 bg-black/50 rounded-full text-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label={`Remove ${file.name}`}
+                  >
+                    <X size={10} weight="bold" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="flex items-center gap-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              multiple
+              className="hidden"
+              disabled={isUploading}
+            />
+            <Button
+              type="button"
+              shape="square"
+              className="rounded-full h-10 w-10 flex-shrink-0"
+              onClick={handleFileSelect}
+              disabled={pendingToolCallConfirmation || isUploading}
+              aria-label="Attach file"
+            >
+              <Paperclip size={16} />
+            </Button>
             <div className="flex-1 relative">
               <Textarea
-                disabled={pendingToolCallConfirmation}
+                disabled={pendingToolCallConfirmation || isUploading}
                 placeholder={
-                  pendingToolCallConfirmation
-                    ? "Please respond to the tool confirmation above..."
-                    : "Send a message..."
+                  isUploading
+                    ? "Uploading files..."
+                    : pendingToolCallConfirmation
+                      ? "Please respond to the tool confirmation above..."
+                      : "Type your message or add files..."
                 }
-                className="flex w-full border border-neutral-200 dark:border-neutral-700 px-3 py-2 text-base ring-offset-background placeholder:text-neutral-500 dark:placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 dark:focus-visible:ring-neutral-700 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-900 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base pb-10 dark:bg-neutral-900"
+                className="flex w-full border border-neutral-200 dark:border-neutral-700 px-3 py-2 ring-offset-background placeholder:text-neutral-500 dark:placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 dark:focus-visible:ring-neutral-700 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-900 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base pb-10 dark:bg-neutral-900"
                 value={agentInput}
                 onChange={(e) => {
                   handleAgentInputChange(e);
@@ -334,7 +558,9 @@ export default function Chat() {
                     !e.nativeEvent.isComposing
                   ) {
                     e.preventDefault();
-                    handleAgentSubmit(e as unknown as React.FormEvent);
+                    (e.target as HTMLInputElement)
+                      .closest("form")
+                      ?.requestSubmit();
                     setTextareaHeight("auto"); // Reset height on Enter submission
                   }
                 }}
@@ -351,6 +577,42 @@ export default function Chat() {
                 </button>
               </div>
             </div>
+
+            <Button
+              type="submit"
+              shape="square"
+              className="rounded-full h-10 w-10 flex-shrink-0"
+              disabled={
+                pendingToolCallConfirmation ||
+                isUploading ||
+                (!agentInput.trim() && attachedFiles.length === 0)
+              }
+            >
+              {isUploading ? (
+                <svg
+                  className="animate-spin h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              ) : (
+                <PaperPlaneRight size={16} />
+              )}
+            </Button>
           </div>
         </form>
       </div>
