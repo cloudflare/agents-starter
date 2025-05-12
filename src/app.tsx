@@ -24,6 +24,7 @@ import {
   Sun,
   Trash,
   PaperPlaneTilt,
+  Stop,
 } from "@phosphor-icons/react";
 
 // List of tools that require human confirmation
@@ -91,7 +92,7 @@ export default function Chat() {
     clearHistory,
     isLoading,
     stop,
-    setInput,
+    setInput
   } = useAgentChat({
     agent,
     maxSteps: 5,
@@ -480,13 +481,25 @@ export default function Chat() {
                 style={{ height: textareaHeight }}
               />
               <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
-                <button
-                  type="submit"
-                  className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
-                  disabled={pendingToolCallConfirmation || !agentInput.trim()}
-                >
-                  <PaperPlaneTilt size={16} />
-                </button>
+                {isLoading ? (
+                  <button
+                    type="button"
+                    onClick={stop}
+                    className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
+                    aria-label="Stop generation"
+                  >
+                    <Stop size={16} />
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
+                    disabled={pendingToolCallConfirmation || !agentInput.trim()}
+                    aria-label="Send message"
+                  >
+                    <PaperPlaneTilt size={16} />
+                  </button>
+                )}
               </div>
             </div>
           </div>
