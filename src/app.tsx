@@ -3,6 +3,8 @@ import { useAgent } from "agents/react";
 import { useAgentChat } from "agents/ai-react";
 import type { Message } from "@ai-sdk/react";
 import type { tools } from "./tools";
+import { agentFetch } from "agents/client";
+import { nanoid } from "nanoid";
 
 // Component imports
 import { Button } from "@/components/button/Button";
@@ -12,6 +14,7 @@ import { Toggle } from "@/components/toggle/Toggle";
 import { Textarea } from "@/components/textarea/Textarea";
 import { MemoizedMarkdown } from "@/components/memoized-markdown";
 import { ToolInvocationCard } from "@/components/tool-invocation-card/ToolInvocationCard";
+import { AddMcpServerDialog } from "@/components/AddMcpServerDialog";
 
 // Icon imports
 import {
@@ -28,6 +31,12 @@ const toolsRequiringConfirmation: (keyof typeof tools)[] = [
   "getWeatherInformation",
 ];
 
+let sessionId = localStorage.getItem("sessionId");
+if (!sessionId) {
+  sessionId = nanoid(8);
+  localStorage.setItem("sessionId", sessionId);
+}
+
 export default function Chat() {
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     // Check localStorage first, default to dark if not found
@@ -37,6 +46,9 @@ export default function Chat() {
   const [showDebug, setShowDebug] = useState(false);
   const [textareaHeight, setTextareaHeight] = useState("auto");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showAddMcpDialog, setShowAddMcpDialog] = useState(false);
+  type McpConnection = { id: string; url: string; connectionState: string; authUrl?: string };
+  const [mcpConnections, setMcpConnections] = useState<McpConnection[]>([]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -77,6 +89,9 @@ export default function Chat() {
     handleSubmit: handleAgentSubmit,
     addToolResult,
     clearHistory,
+    isLoading,
+    stop,
+    setInput,
   } = useAgentChat({
     agent,
     maxSteps: 5,
@@ -102,9 +117,121 @@ export default function Chat() {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
+  // Fetch MCP connections
+  const fetchMcpConnections = async () => {
+    const res = await agentFetch(
+      {
+        host: agent.host,
+        agent: "chat",
+        name: sessionId!,
+        path: "get-mcp-connections",
+      },
+      { method: "GET" }
+    );
+    const data = (await res.json()) as { mcpConnections: Record<string, { url: string; connectionState: string; authUrl?: string }> };
+    const connections = Object.entries(data.mcpConnections || {}).map(([id, conn]) => ({
+      id,
+      url: conn.url,
+      connectionState: conn.connectionState,
+      authUrl: conn.authUrl,
+    }));
+    setMcpConnections(connections);
+  };
+
+  useEffect(() => {
+    fetchMcpConnections();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Helper to open auth popup
+  function openPopup(authUrl: string) {
+    window.open(
+      authUrl,
+      "popupWindow",
+      "width=600,height=800,resizable=yes,scrollbars=yes,toolbar=yes,menubar=no,location=no,directories=no,status=yes"
+    );
+  }
+
+  const handleAddMcpServer = async ({ name, url, localUrl }: { name: string; url: string; localUrl: string }) => {
+    const res = await agentFetch(
+      {
+        host: agent.host,
+        agent: "chat",
+        name: sessionId!,
+        path: "add-mcp",
+      },
+      {
+        method: "POST",
+        body: JSON.stringify({ url, name, localUrl }),
+      }
+    );
+    // Try to get authUrl from response
+    try {
+      const data = (await res.json()) as { id: string; url: string; connectionState: string; authUrl?: string };
+      if (data?.authUrl) {
+        openPopup(data.authUrl);
+      }
+    } catch (e) {
+      // ignore if not JSON or no authUrl
+    }
+    fetchMcpConnections(); // Refresh list after adding
+  };
+
+  const handleRemoveMcpConnection = async (id: string) => {
+    await agentFetch(
+      {
+        host: agent.host,
+        agent: "chat",
+        name: sessionId!,
+        path: "remove-mcp-connection",
+      },
+      {
+        method: "POST",
+        body: JSON.stringify({ id }),
+      }
+    );
+    fetchMcpConnections(); // Refresh list after removal
+  };
+
   return (
-    <div className="h-[100vh] w-full p-4 flex justify-center items-center bg-fixed overflow-hidden">
+    <div className="h-[100vh] w-full p-4 flex flex-col items-center bg-fixed overflow-hidden">
       <HasOpenAIKey />
+      <AddMcpServerDialog
+        open={showAddMcpDialog}
+        onOpenChange={setShowAddMcpDialog}
+        onSubmit={handleAddMcpServer}
+      />
+      {/* MCP Connections List */}
+      {mcpConnections.length > 0 && (
+        <div className="flex gap-3 mb-4 w-full max-w-lg mx-auto">
+          {mcpConnections.map((conn) => (
+            <Card
+              key={conn.id}
+              className="p-3 flex flex-col items-start min-w-[220px] border-2 border-primary rounded-xl shadow-md relative"
+            >
+              <button
+                type="button"
+                className="absolute top-2 right-2 text-red-500 hover:text-red-700 transition-colors"
+                onClick={() => handleRemoveMcpConnection(conn.id)}
+                aria-label="Remove MCP Server"
+              >
+                <Trash size={18} />
+              </button>
+              <span className="font-semibold text-sm break-all">{conn.url}</span>
+              <span className="text-xs text-muted-foreground mt-1">{conn.connectionState}</span>
+              {/* Show Authorize button if authenticating and has authUrl */}
+              {conn.connectionState === "authenticating" && (
+                <Button
+                  className="mt-2 px-3 py-1 rounded"
+                  onClick={() => conn?.authUrl && openPopup(conn.authUrl)}
+                >
+                  Authorize
+                </Button>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
       <div className="h-[calc(100vh-2rem)] w-full mx-auto max-w-lg flex flex-col shadow-xl rounded-md overflow-hidden relative border border-neutral-300 dark:border-neutral-800">
         <div className="px-4 py-3 border-b border-neutral-300 dark:border-neutral-800 flex items-center gap-3 sticky top-0 z-10">
           <div className="flex items-center justify-center h-8 w-8">
@@ -156,6 +283,17 @@ export default function Chat() {
             onClick={clearHistory}
           >
             <Trash size={20} />
+          </Button>
+
+          <Button
+            variant="primary"
+            size="md"
+            shape="square"
+            className="rounded-full h-9 w-9"
+            onClick={() => setShowAddMcpDialog(true)}
+            aria-label="Add MCP Server"
+          >
+            +
           </Button>
         </div>
 
