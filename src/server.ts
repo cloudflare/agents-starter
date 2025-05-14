@@ -26,24 +26,40 @@ const model = openai("gpt-4o-2024-11-20");
  * Chat Agent implementation that handles real-time AI chat interactions
  */
 export class Chat extends AIChatAgent<Env> {
+  async addMcpServerFromChat(name: string, url: string, localUrl: string) {
+    const mcpConnection = await this.addMcpServer(name, url, localUrl);
+    console.log("mcpConnection", mcpConnection);
+    return mcpConnection;
+  }
+
+  async removeMcpServerFromChat(id: string) {
+    await this.removeMcpServer(id);
+  }
+
+  async getMcpConnections() {
+    return this.mcp.mcpConnections;
+  }
+
+  async closeMcpConnection(id: string) {
+    await this.closeMcpConnection(id);
+  }
+
   /**
    * Handles incoming chat messages and manages the response stream
    * @param onFinish - Callback function executed when streaming completes
    */
-
   async onChatMessage(
     onFinish: StreamTextOnFinishCallback<ToolSet>,
     options?: { abortSignal?: AbortSignal }
   ) {
-    // const mcpConnection = await this.mcp.connect(
-    //   "https://path-to-mcp-server/sse"
-    // );
 
     // Collect all tools, including MCP tools
     const allTools = {
       ...tools,
       ...this.mcp.unstable_getAITools(),
     };
+
+    console.log("allTools", allTools);
 
     // Create a streaming response that handles both text and tool outputs
     const dataStreamResponse = createDataStreamResponse({
@@ -72,7 +88,6 @@ If the user asks to schedule a task, use the schedule tool to schedule the task.
             onFinish(
               args as Parameters<StreamTextOnFinishCallback<ToolSet>>[0]
             );
-            // await this.mcp.closeConnection(mcpConnection.id);
           },
           onError: (error) => {
             console.error("Error while streaming:", error);
@@ -97,6 +112,41 @@ If the user asks to schedule a task, use the schedule tool to schedule the task.
         createdAt: new Date(),
       },
     ]);
+  }
+
+  async onRequest(request: Request): Promise<Response> {
+    const reqUrl = new URL(request.url);
+    if (reqUrl.pathname.endsWith("add-mcp") && request.method === "POST") {
+      const mcpServer = (await request.json()) as { url: string; name: string; localUrl?: string };
+      const mcpConnection = await this.addMcpServerFromChat(mcpServer.name, mcpServer.url, mcpServer.localUrl || "");
+      return new Response(JSON.stringify(mcpConnection), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+    if (reqUrl.pathname.endsWith("get-mcp-connections") && request.method === "GET") {
+      const mcpConnections = await this.getMcpConnections();
+      console.log("mcpConnections", mcpConnections);
+      return new Response(JSON.stringify({ mcpConnections }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    if (reqUrl.pathname.endsWith("get-mcp-servers") && request.method === "GET") {
+      const mcpServers = await this.getConnections();
+      console.log("mcpServers", mcpServers);
+      return new Response(JSON.stringify({ mcpServers }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    if (reqUrl.pathname.endsWith("get-messages") && request.method === "GET") {
+      // Return an empty array or your actual chat history
+      return new Response(JSON.stringify(this.messages), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    if (reqUrl.pathname.endsWith("remove-mcp-connection") && request.method === "POST") {
+      const { id } = (await request.json()) as { id: string };
+      await this.removeMcpServerFromChat(id);
+      return new Response("Ok", { status: 200 });
+    }
+    return new Response("Not found", { status: 404 });
   }
 }
 
