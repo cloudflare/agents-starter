@@ -127,7 +127,7 @@ export const executions = {
 Tools can be configured in two ways:
 
 1. With an `execute` function for automatic execution
-2. Without an `execute` function, requiring confirmation and using the `executions` object to handle the confirmed action
+2. Without an `execute` function, requiring confirmation and using the `executions` object to handle the confirmed action. NOTE: The keys in `executions` should match `toolsRequiringConfirmation` in `app.tsx`.
 
 ### Use a different AI model provider
 

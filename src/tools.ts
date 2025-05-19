@@ -125,6 +125,7 @@ export const tools = {
  * Implementation of confirmation-required tools
  * This object contains the actual logic for tools that need human approval
  * Each function here corresponds to a tool above that doesn't have an execute function
+ * NOTE: keys below should match toolsRequiringConfirmation in app.tsx
  */
 export const executions = {
   getWeatherInformation: async ({ city }: { city: string }) => {
