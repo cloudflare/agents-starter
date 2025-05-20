@@ -557,6 +557,13 @@ export default function Chat() {
                             </DropdownMenuSubContent>
                           </DropdownMenuSub>
                         ))}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => setTimeout(() => setShowAddMcpDialog(true), 0)}
+                          className="bg-primary/5 text-primary rounded-lg font-semibold px-3 py-2 hover:bg-primary/10 transition-colors cursor-pointer"
+                        >
+                          + Add MCP Server
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>

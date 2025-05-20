@@ -28,7 +28,6 @@ const model = openai("gpt-4o-2024-11-20");
 export class Chat extends AIChatAgent<Env> {
   async addMcpServerFromChat(name: string, url: string, localUrl: string) {
     const mcpConnection = await this.addMcpServer(name, url, localUrl);
-    console.log("mcpConnection", mcpConnection);
     return mcpConnection;
   }
 
@@ -58,8 +57,6 @@ export class Chat extends AIChatAgent<Env> {
       ...tools,
       ...this.mcp.unstable_getAITools(),
     };
-
-    console.log("allTools", allTools);
 
     // Create a streaming response that handles both text and tool outputs
     const dataStreamResponse = createDataStreamResponse({
@@ -123,14 +120,12 @@ If the user asks to schedule a task, use the schedule tool to schedule the task.
     }
     if (reqUrl.pathname.endsWith("get-mcp-connections") && request.method === "GET") {
       const mcpConnections = await this.getMcpConnections();
-      console.log("mcpConnections", mcpConnections);
       return new Response(JSON.stringify({ mcpConnections }), {
         headers: { "Content-Type": "application/json" },
       });
     }
     if (reqUrl.pathname.endsWith("get-mcp-servers") && request.method === "GET") {
       const mcpServers = await this.getConnections();
-      console.log("mcpServers", mcpServers);
       return new Response(JSON.stringify({ mcpServers }), {
         headers: { "Content-Type": "application/json" },
       });
