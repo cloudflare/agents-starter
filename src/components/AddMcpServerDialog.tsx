@@ -10,6 +10,7 @@ import {
 } from "@/components/dialog/dialog";
 import { Button } from "@/components/button/Button";
 import { Input } from "@/components/input/Input";
+import { useForm } from "react-hook-form";
 
 interface AddMcpServerDialogProps {
   open: boolean;
@@ -17,24 +18,28 @@ interface AddMcpServerDialogProps {
   onSubmit: (data: { name: string; url: string; }) => void;
 }
 
-export function AddMcpServerDialog({ open, onOpenChange, onSubmit }: AddMcpServerDialogProps) {
-  const [name, setName] = useState("");
-  const [url, setUrl] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+type FormValues = {
+  name: string;
+  url: string;
+};
 
-  const handleAccept = async () => {
+export function AddMcpServerDialog({ open, onOpenChange, onSubmit }: AddMcpServerDialogProps) {
+  const [submitting, setSubmitting] = useState(false);
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<FormValues>({
+    defaultValues: { name: "", url: "" },
+  });
+
+  const handleAccept = async (data: FormValues) => {
     setSubmitting(true);
-    await onSubmit({ name, url });
+    await onSubmit(data);
     setSubmitting(false);
     onOpenChange(false);
-    setName("");
-    setUrl("");
+    reset();
   };
 
   const handleCancel = () => {
     onOpenChange(false);
-    setName("");
-    setUrl("");
+    reset();
   };
 
   return (
@@ -46,42 +51,52 @@ export function AddMcpServerDialog({ open, onOpenChange, onSubmit }: AddMcpServe
             Enter the details for the new MCP server connection.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-2">
+        <form className="space-y-4 py-2" onSubmit={handleSubmit(handleAccept)}>
           <div>
             <label className="block text-sm font-medium mb-1" htmlFor="mcp-name">Name</label>
             <Input
               id="mcp-name"
-              value={name}
-              onChange={e => setName(e.target.value)}
+              className="w-full"
               placeholder="Server Name"
-              required
               size="base"
+              {...register("name", { required: "Name is required" })}
               onValueChange={undefined}
             />
+            {errors.name && (
+              <span className="text-red-500 text-xs mt-1 block">{errors.name.message}</span>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1" htmlFor="mcp-url">URL</label>
             <Input
               id="mcp-url"
-              value={url}
-              onChange={e => setUrl(e.target.value)}
+              className="w-full"
               placeholder="https://example.com"
-              required
               size="base"
+              {...register("url", {
+                required: "URL is required",
+                pattern: {
+                  value: /^https?:\/\/.+$/,
+                  message: "Enter a valid URL (must start with http(s)://)"
+                }
+              })}
               onValueChange={undefined}
             />
+            {errors.url && (
+              <span className="text-red-500 text-xs mt-1 block">{errors.url.message}</span>
+            )}
           </div>
-        </div>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting}>
-              Cancel
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting}>
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button type="submit" variant="primary" disabled={submitting}>
+              {submitting ? "Adding..." : "Add MCP Server"}
             </Button>
-          </DialogClose>
-          <Button type="button" variant="primary" onClick={handleAccept} disabled={submitting || !name || !url || !localUrl}>
-            {submitting ? "Adding..." : "Add MCP Server"}
-          </Button>
-        </DialogFooter>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
