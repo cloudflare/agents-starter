@@ -81,6 +81,7 @@ export default function Chat() {
 
   const agent = useAgent({
     agent: "chat",
+    name: localStorage.getItem("sessionId") ?? undefined
   });
 
   const {
@@ -91,11 +92,10 @@ export default function Chat() {
     addToolResult,
     clearHistory,
     isLoading,
-    stop,
-    setInput
+    stop
   } = useAgentChat({
     agent,
-    maxSteps: 5,
+    maxSteps: 5
   });
 
   // Scroll to bottom when messages change
