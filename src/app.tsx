@@ -15,6 +15,7 @@ import { Textarea } from "@/components/textarea/Textarea";
 import { MemoizedMarkdown } from "@/components/memoized-markdown";
 import { ToolInvocationCard } from "@/components/tool-invocation-card/ToolInvocationCard";
 import { AddMcpServerDialog } from "@/components/AddMcpServerDialog";
+import { DropdownMenu } from "@/components/dropdown/DropdownMenu";
 
 // Icon imports
 import {
@@ -25,6 +26,7 @@ import {
   Trash,
   PaperPlaneTilt,
   Stop,
+  Sliders
 } from "@phosphor-icons/react";
 
 // List of tools that require human confirmation
@@ -118,8 +120,7 @@ export default function Chat() {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  // Fetch MCP connections
-  const fetchMcpConnections = async () => {
+  const fetchMcpConnections = useCallback(async () => {
     const res = await agentFetch(
       {
         host: agent.host,
@@ -137,12 +138,11 @@ export default function Chat() {
       authUrl: conn.authUrl,
     }));
     setMcpConnections(connections);
-  };
+  }, [agent.host]);
 
   useEffect(() => {
     fetchMcpConnections();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchMcpConnections]);
 
   // Helper to open auth popup
   function openPopup(authUrl: string) {
@@ -446,9 +446,10 @@ export default function Chat() {
             });
             setTextareaHeight("auto"); // Reset height after submission
           }}
-          className="p-3 bg-neutral-50 absolute bottom-0 left-0 right-0 z-10 border-t border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900"
+          className="p-3 bg-neutral-50 absolute bottom-0 left-0 right-0 border-t border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div className="flex items-center gap-2">
+            {/* Settings Icon Button */}
             <div className="flex-1 relative">
               <Textarea
                 disabled={pendingToolCallConfirmation}
@@ -480,7 +481,7 @@ export default function Chat() {
                 rows={2}
                 style={{ height: textareaHeight }}
               />
-              <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
+              <div className="absolute bottom-0 left-0 p-2 w-fit flex flex-row justify-between">
                 {isLoading ? (
                   <button
                     type="button"
@@ -491,14 +492,51 @@ export default function Chat() {
                     <Stop size={16} />
                   </button>
                 ) : (
+                  <div className="flex justify-between w-full">
+                    {/* Control Panel DropdownMenu (Sliders icon as trigger) */}
+                    <DropdownMenu
+                      align="start"
+                      side="top"
+                      MenuItems={[
+                        { type: "title", titleContent: "Control Panel" },
+                        { type: "button", label: "Placeholder Action 1", onClick: () => {}, icon: null },
+                        { type: "button", label: "Placeholder Action 2", onClick: () => {}, icon: null },
+                        { type: "divider" },
+                        { type: "button", label: "Another Action", onClick: () => {}, icon: null },
+                      ]}
+                    >
+                      <button
+                        type="button"
+                        className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
+                        aria-label="Control Panel"
+                      >
+                        <Sliders size={16} />
+                      </button>
+                    </DropdownMenu>
+                  </div>
+                )}
+              </div>
+              <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-between">
+                {isLoading ? (
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={stop}
                     className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
-                    disabled={pendingToolCallConfirmation || !agentInput.trim()}
-                    aria-label="Send message"
+                    aria-label="Stop generation"
                   >
-                    <PaperPlaneTilt size={16} />
+                    <Stop size={16} />
                   </button>
+                ) : (
+                  <div className="flex justify-between w-full">
+                      <button
+                      type="submit"
+                      className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
+                      disabled={pendingToolCallConfirmation || !agentInput.trim()}
+                      aria-label="Send message"
+                    >
+                      <PaperPlaneTilt size={16} />
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
