@@ -15,7 +15,17 @@ import { Textarea } from "@/components/textarea/Textarea";
 import { MemoizedMarkdown } from "@/components/memoized-markdown";
 import { ToolInvocationCard } from "@/components/tool-invocation-card/ToolInvocationCard";
 import { AddMcpServerDialog } from "@/components/AddMcpServerDialog";
-import { DropdownMenu } from "@/components/dropdown/DropdownMenu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/dropdown-menu";
 
 // Icon imports
 import {
@@ -495,37 +505,48 @@ export default function Chat() {
                 ) : (
                   <div className="flex justify-between w-full">
                     {/* Control Panel DropdownMenu (Sliders icon as trigger) */}
-                    <DropdownMenu
-                      align="start"
-                      side="top"
-                      MenuItems={
-                        mcpConnections.map((conn) => ({
-                          type: "button",
-                          label: (
-                            <div className="flex items-center w-full justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="flex items-center justify-center w-6 h-6 rounded bg-neutral-100 text-neutral-600 font-semibold text-xs border border-neutral-200 mr-2">
-                                  {conn.url.charAt(0).toUpperCase()}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
+                          aria-label="Control Panel"
+                        >
+                          <Sliders size={16} />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" side="top">
+                        <DropdownMenuLabel>MCP Connections</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {mcpConnections.map((conn) => (
+                          <DropdownMenuSub key={conn.id}>
+                            <DropdownMenuSubTrigger>
+                              <div className="flex items-center w-full justify-between">
+                                <div className="flex items-center gap-2">
+                                  <span className="flex items-center justify-center w-6 h-6 rounded bg-neutral-100 text-neutral-600 font-semibold text-xs border border-neutral-200 mr-2">
+                                    {conn.url.charAt(0).toUpperCase()}
+                                  </span>
+                                  <span className="text-base text-neutral-900">{conn.url}</span>
+                                </div>
+                                <span className="ml-2 flex items-center justify-center text-xs font-semibold text-blue-600 bg-blue-50 rounded-full px-2 py-0.5 border border-blue-100">
+                                  {Array.isArray(conn.tools) ? conn.tools.length : 0}
                                 </span>
-                                <span className="text-base text-neutral-900">{conn.url}</span>
                               </div>
-                              <span className="ml-2 flex items-center justify-center text-xs font-semibold text-blue-600 bg-blue-50 rounded-full px-2 py-0.5 border border-blue-100">
-                                {Array.isArray(conn.tools) ? conn.tools.length : 0}
-                              </span>
-                            </div>
-                          ),
-                          onClick: () => {},
-                          icon: null
-                        }))
-                      }
-                    >
-                      <button
-                        type="button"
-                        className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
-                        aria-label="Control Panel"
-                      >
-                        <Sliders size={16} />
-                      </button>
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent>
+                              {Array.isArray(conn.tools) && conn.tools.length > 0 ? (
+                                (conn.tools as { name?: string }[]).map((tool, idx) => (
+                                  <DropdownMenuItem key={`${conn.id}-${tool.name || idx}`}>
+                                    {tool.name || "Unnamed Tool"}
+                                  </DropdownMenuItem>
+                                ))
+                              ) : (
+                                <DropdownMenuItem disabled>No tools</DropdownMenuItem>
+                              )}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+                        ))}
+                      </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
                 )}
