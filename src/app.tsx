@@ -114,7 +114,6 @@ export default function Chat() {
         return {
           id,
           url: c.server_url,
-          name: c.name || "",
           connectionState: c.state,
           authUrl: c.auth_url ?? undefined,
           tools,
@@ -483,7 +482,7 @@ export default function Chat() {
                               <span className="flex items-center justify-center w-6 h-6 rounded bg-neutral-100 text-neutral-600 font-semibold text-xs border border-neutral-200 mr-2">
                                 {conn.url.charAt(0).toUpperCase()}
                               </span>
-                              <span className="text-base text-neutral-900">{conn.name || conn.url}</span>
+                              <span className="text-base text-neutral-900">{conn.url}</span>
                               <span
                                 className={`ml-4 text-xs font-medium lowercase tracking-wide align-middle
                                   ${conn.connectionState === "ready"

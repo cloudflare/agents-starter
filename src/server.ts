@@ -115,7 +115,7 @@ If the user asks to schedule a task, use the schedule tool to schedule the task.
     const reqUrl = new URL(request.url);
     if (reqUrl.pathname.endsWith("add-mcp") && request.method === "POST") {
       const mcpServer = (await request.json()) as { url: string; name: string; localUrl?: string };
-      const mcpConnection = await this.addMcpServerFromChat(mcpServer.name, mcpServer.url, mcpServer.localUrl || "");
+      const mcpConnection = await this.addMcpServerFromChat(mcpServer.name, mcpServer.url, this.env.APP_URL || "");
       return new Response(JSON.stringify(mcpConnection), { status: 200, headers: { "Content-Type": "application/json" } });
     }
     if (reqUrl.pathname.endsWith("get-mcp-connections") && request.method === "GET") {
