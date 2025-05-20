@@ -497,13 +497,27 @@ export default function Chat() {
                     <DropdownMenu
                       align="start"
                       side="top"
-                      MenuItems={[
-                        { type: "title", titleContent: "Control Panel" },
-                        { type: "button", label: "Placeholder Action 1", onClick: () => {}, icon: null },
-                        { type: "button", label: "Placeholder Action 2", onClick: () => {}, icon: null },
-                        { type: "divider" },
-                        { type: "button", label: "Another Action", onClick: () => {}, icon: null },
-                      ]}
+                      MenuItems={
+                        mcpConnections.map((conn, idx) => ({
+                          type: "button",
+                          label: (
+                            <div className="flex items-center w-full justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="flex items-center justify-center w-6 h-6 rounded bg-neutral-100 text-neutral-600 font-semibold text-xs border border-neutral-200 mr-2">
+                                  {conn.url.charAt(0).toUpperCase()}
+                                </span>
+                                <span className="text-base text-neutral-900">{conn.url}</span>
+                              </div>
+                              <span className="ml-2 flex items-center justify-center text-xs font-semibold text-blue-600 bg-blue-50 rounded-full px-2 py-0.5 border border-blue-100">
+                                {/* Placeholder tool count, replace with real value if available */}
+                                {idx === 0 ? 36 : idx === 1 ? 89 : 23}
+                              </span>
+                            </div>
+                          ),
+                          onClick: () => {},
+                          icon: null
+                        }))
+                      }
                     >
                       <button
                         type="button"
