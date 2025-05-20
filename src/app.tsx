@@ -213,37 +213,6 @@ export default function Chat() {
         onOpenChange={setShowAddMcpDialog}
         onSubmit={handleAddMcpServer}
       />
-      {/* MCP Connections List */}
-      {mcpConnections.length > 0 && (
-        <div className="flex gap-3 mb-4 w-full max-w-lg mx-auto">
-          {mcpConnections.map((conn) => (
-            <Card
-              key={conn.id}
-              className="p-3 flex flex-col items-start min-w-[220px] border-2 border-primary rounded-xl shadow-md relative"
-            >
-              <button
-                type="button"
-                className="absolute top-2 right-2 text-red-500 hover:text-red-700 transition-colors"
-                onClick={() => handleRemoveMcpConnection(conn.id)}
-                aria-label="Remove MCP Server"
-              >
-                <Trash size={18} />
-              </button>
-              <span className="font-semibold text-sm break-all">{conn.url}</span>
-              <span className="text-xs text-muted-foreground mt-1">{conn.connectionState}</span>
-              {/* Show Authorize button if authenticating and has authUrl */}
-              {conn.connectionState === "authenticating" && (
-                <Button
-                  className="mt-2 px-3 py-1 rounded"
-                  onClick={() => conn?.authUrl && openPopup(conn.authUrl)}
-                >
-                  Authorize
-                </Button>
-              )}
-            </Card>
-          ))}
-        </div>
-      )}
       <div className="h-[calc(100vh-2rem)] w-full mx-auto max-w-lg flex flex-col shadow-xl rounded-md overflow-hidden relative border border-neutral-300 dark:border-neutral-800">
         <div className="px-4 py-3 border-b border-neutral-300 dark:border-neutral-800 flex items-center gap-3 sticky top-0 z-10">
           <div className="flex items-center justify-center h-8 w-8">
@@ -291,21 +260,10 @@ export default function Chat() {
             variant="ghost"
             size="md"
             shape="square"
-            className="rounded-full h-9 w-9"
+            className="rounded-full h-9 w-9 cursor-pointer"
             onClick={clearHistory}
           >
             <Trash size={20} />
-          </Button>
-
-          <Button
-            variant="primary"
-            size="md"
-            shape="square"
-            className="rounded-full h-9 w-9"
-            onClick={() => setShowAddMcpDialog(true)}
-            aria-label="Add MCP Server"
-          >
-            +
           </Button>
         </div>
 
@@ -522,18 +480,47 @@ export default function Chat() {
                       >
                         <DropdownMenuLabel>MCP Connections</DropdownMenuLabel>
                         <DropdownMenuSeparator />
+                        {mcpConnections.length === 0 && (
+                            <span className="p-3 text-neutral-500 dark:text-neutral-400 text-sm select-none text-center w-full">No MCP servers available.</span>
+                        )}
                         {mcpConnections.map((conn) => (
                           <DropdownMenuSub key={conn.id}>
-                            <DropdownMenuSubTrigger
-                              className="hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                            >
+                            <DropdownMenuSubTrigger className="hover:bg-neutral-100 dark:hover:bg-neutral-800">
                               <div className="flex items-center w-full justify-between">
-                                <div className="flex items-center gap-2">
-                                  <span className="flex items-center justify-center w-6 h-6 rounded bg-neutral-100 text-neutral-600 font-semibold text-xs border border-neutral-200 mr-2">
-                                    {conn.url.charAt(0).toUpperCase()}
+                                <div className="flex flex-col gap-0.5">
+                                  <div className="flex items-center">
+                                    <span className="flex items-center justify-center w-6 h-6 rounded bg-neutral-100 text-neutral-600 font-semibold text-xs border border-neutral-200 mr-2">
+                                      {conn.url.charAt(0).toUpperCase()}
+                                    </span>
+                                    <span className="text-base text-neutral-900">{conn.url}</span>
+                                    <button
+                                      type="button"
+                                      className="ml-2 text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+                                      onClick={e => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        handleRemoveMcpConnection(conn.id);
+                                      }}
+                                      aria-label="Remove MCP Server"
+                                    >
+                                      <Trash size={16} />
+                                    </button>
+                                  </div>
+                                  <span
+                                    className={`ml-8 text-xs font-medium lowercase tracking-wide align-middle
+                                      ${conn.connectionState === "connected"
+                                        ? "text-green-600"
+                                        : conn.connectionState === "authenticating"
+                                        ? "text-yellow-700"
+                                        : "text-red-600"}
+                                    `}
+                                  >
+                                    {conn.connectionState === "connected"
+                                      ? <span className="text-green-600">ready</span>
+                                      : conn.connectionState}
                                   </span>
-                                  <span className="text-base text-neutral-900">{conn.url}</span>
                                 </div>
+                                {/* Tool count badge */}
                                 <span className="ml-2 flex items-center justify-center text-xs font-semibold text-blue-600 bg-blue-50 rounded-full px-2 py-0.5 border border-blue-100">
                                   {Array.isArray(conn.tools) ? conn.tools.length : 0}
                                 </span>
