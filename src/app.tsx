@@ -515,12 +515,18 @@ export default function Chat() {
                           <Sliders size={16} />
                         </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" side="top">
+                      <DropdownMenuContent
+                        align="start"
+                        side="top"
+                        className="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-xl rounded-xl p-1 text-base font-medium text-neutral-900 dark:text-white"
+                      >
                         <DropdownMenuLabel>MCP Connections</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         {mcpConnections.map((conn) => (
                           <DropdownMenuSub key={conn.id}>
-                            <DropdownMenuSubTrigger>
+                            <DropdownMenuSubTrigger
+                              className="hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                            >
                               <div className="flex items-center w-full justify-between">
                                 <div className="flex items-center gap-2">
                                   <span className="flex items-center justify-center w-6 h-6 rounded bg-neutral-100 text-neutral-600 font-semibold text-xs border border-neutral-200 mr-2">
@@ -533,10 +539,15 @@ export default function Chat() {
                                 </span>
                               </div>
                             </DropdownMenuSubTrigger>
-                            <DropdownMenuSubContent>
+                            <DropdownMenuSubContent
+                              className="border border-neutral-100 dark:border-neutral-800"
+                            >
                               {Array.isArray(conn.tools) && conn.tools.length > 0 ? (
                                 (conn.tools as { name?: string }[]).map((tool, idx) => (
-                                  <DropdownMenuItem key={`${conn.id}-${tool.name || idx}`}>
+                                  <DropdownMenuItem
+                                    key={`${conn.id}-${tool.name || idx}`}
+                                    className="hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                                  >
                                     {tool.name || "Unnamed Tool"}
                                   </DropdownMenuItem>
                                 ))
