@@ -477,63 +477,37 @@ export default function Chat() {
                             <span className="p-3 text-neutral-500 dark:text-neutral-400 text-sm select-none text-center w-full">No MCP servers available.</span>
                         )}
                         {mcpConnections.map((conn) => (
-                          <DropdownMenuSub key={conn.id}>
-                            <DropdownMenuSubTrigger className="hover:bg-neutral-100 dark:hover:bg-neutral-800">
-                              <div className="flex items-center w-full justify-between">
-                                <div className="flex flex-col gap-0.5">
-                                  <div className="flex items-center">
-                                    <span className="flex items-center justify-center w-6 h-6 rounded bg-neutral-100 text-neutral-600 font-semibold text-xs border border-neutral-200 mr-2">
-                                      {conn.url.charAt(0).toUpperCase()}
-                                    </span>
-                                    <span className="text-base text-neutral-900">{conn.url}</span>
-                                    <button
-                                      type="button"
-                                      className="ml-2 text-red-500 hover:text-red-700 transition-colors cursor-pointer"
-                                      onClick={e => {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        handleRemoveMcpConnection(conn.id);
-                                      }}
-                                      aria-label="Remove MCP Server"
-                                    >
-                                      <Trash size={16} />
-                                    </button>
-                                  </div>
-                                  <span
-                                    className={`ml-8 text-xs font-medium lowercase tracking-wide align-middle
-                                      ${conn.connectionState === "ready"
-                                        ? "text-green-600"
-                                        : conn.connectionState === "authenticating"
-                                        ? "text-yellow-700"
-                                        : "text-red-600"}
-                                    `}
-                                  >
-                                    {conn.connectionState}
-                                  </span>
-                                </div>
-                                {/* Tool count badge */}
-                                <span className="ml-2 flex items-center justify-center text-xs font-semibold text-blue-600 bg-blue-50 rounded-full px-2 py-0.5 border border-blue-100">
-                                  {Array.isArray(conn.tools) ? conn.tools.length : 0}
-                                </span>
-                              </div>
-                            </DropdownMenuSubTrigger>
-                            <DropdownMenuSubContent
-                              className="border border-neutral-100 dark:border-neutral-800"
+                          <DropdownMenuItem key={conn.id} className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-2">
+                              <span className="flex items-center justify-center w-6 h-6 rounded bg-neutral-100 text-neutral-600 font-semibold text-xs border border-neutral-200 mr-2">
+                                {conn.url.charAt(0).toUpperCase()}
+                              </span>
+                              <span className="text-base text-neutral-900">{conn.url}</span>
+                              <span
+                                className={`ml-4 text-xs font-medium lowercase tracking-wide align-middle
+                                  ${conn.connectionState === "ready"
+                                    ? "text-green-600"
+                                    : conn.connectionState === "authenticating"
+                                    ? "text-yellow-700"
+                                    : "text-red-600"}
+                                `}
+                              >
+                                {conn.connectionState}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              className="ml-2 text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+                              onClick={e => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                handleRemoveMcpConnection(conn.id);
+                              }}
+                              aria-label="Remove MCP Server"
                             >
-                              {Array.isArray(conn.tools) && conn.tools.length > 0 ? (
-                                (conn.tools as { name?: string }[]).map((tool, idx) => (
-                                  <DropdownMenuItem
-                                    key={`${conn.id}-${tool.name || idx}`}
-                                    className="hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                                  >
-                                    {tool.name || "Unnamed Tool"}
-                                  </DropdownMenuItem>
-                                ))
-                              ) : (
-                                <DropdownMenuItem disabled>No tools</DropdownMenuItem>
-                              )}
-                            </DropdownMenuSubContent>
-                          </DropdownMenuSub>
+                              <Trash size={16} />
+                            </button>
+                          </DropdownMenuItem>
                         ))}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
