@@ -93,7 +93,34 @@ export default function Chat() {
 
   const agent = useAgent({
     agent: "chat",
-    name: localStorage.getItem("sessionId") ?? undefined
+    name: localStorage.getItem("sessionId") ?? undefined,
+    onMcpUpdate: (mcpServersState) => {
+      // Use the same mapping logic as fetchMcpConnections
+      const connections = Object.entries(mcpServersState.servers || {}).map(([id, conn]) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const c = conn ;
+        let tools: { name?: string }[] = [];
+        if (Array.isArray(c.tools)) {
+          tools = c.tools as { name?: string }[];
+        } else if (c.tools && typeof c.tools === 'object') {
+          tools = Object.values(c.tools) as { name?: string }[];
+        } else if (c.capabilities) {
+          if (Array.isArray(c.capabilities.tools)) {
+            tools = c.capabilities.tools as { name?: string }[];
+          } else if (c.capabilities.tools && typeof c.capabilities.tools === 'object') {
+            tools = Object.values(c.capabilities.tools) as { name?: string }[];
+          }
+        }
+        return {
+          id,
+          url: c.server_url,
+          connectionState: c.state,
+          authUrl: c.auth_url ?? undefined,
+          tools,
+        };
+      });
+      setMcpConnections(connections);
+    },
   });
 
   const {
@@ -130,31 +157,6 @@ export default function Chat() {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  const fetchMcpConnections = useCallback(async () => {
-    const res = await agentFetch(
-      {
-        host: agent.host,
-        agent: "chat",
-        name: sessionId!,
-        path: "get-mcp-connections",
-      },
-      { method: "GET" }
-    );
-    const data = (await res.json()) as { mcpConnections: Record<string, { url: string; connectionState: string; authUrl?: string; tools?: unknown[] }> };
-    const connections = Object.entries(data.mcpConnections || {}).map(([id, conn]) => ({
-      id,
-      url: conn.url,
-      connectionState: conn.connectionState,
-      authUrl: conn.authUrl,
-      tools: conn.tools,
-    }));
-    setMcpConnections(connections);
-  }, [agent.host]);
-
-  useEffect(() => {
-    fetchMcpConnections();
-  }, [fetchMcpConnections]);
-
   // Helper to open auth popup
   function openPopup(authUrl: string) {
     window.open(
@@ -186,7 +188,7 @@ export default function Chat() {
     } catch (e) {
       // ignore if not JSON or no authUrl
     }
-    fetchMcpConnections(); // Refresh list after adding
+    // No need to fetch, real-time updates will handle it
   };
 
   const handleRemoveMcpConnection = async (id: string) => {
@@ -202,7 +204,7 @@ export default function Chat() {
         body: JSON.stringify({ id }),
       }
     );
-    fetchMcpConnections(); // Refresh list after removal
+    // No need to fetch, real-time updates will handle it
   };
 
   return (
@@ -451,16 +453,7 @@ export default function Chat() {
                 style={{ height: textareaHeight }}
               />
               <div className="absolute bottom-0 left-0 p-2 w-fit flex flex-row justify-between">
-                {isLoading ? (
-                  <button
-                    type="button"
-                    onClick={stop}
-                    className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
-                    aria-label="Stop generation"
-                  >
-                    <Stop size={16} />
-                  </button>
-                ) : (
+              
                   <div className="flex justify-between w-full">
                     {/* Control Panel DropdownMenu (Sliders icon as trigger) */}
                     <DropdownMenu>
@@ -508,16 +501,14 @@ export default function Chat() {
                                   </div>
                                   <span
                                     className={`ml-8 text-xs font-medium lowercase tracking-wide align-middle
-                                      ${conn.connectionState === "connected"
+                                      ${conn.connectionState === "ready"
                                         ? "text-green-600"
                                         : conn.connectionState === "authenticating"
                                         ? "text-yellow-700"
                                         : "text-red-600"}
                                     `}
                                   >
-                                    {conn.connectionState === "connected"
-                                      ? <span className="text-green-600">ready</span>
-                                      : conn.connectionState}
+                                    {conn.connectionState}
                                   </span>
                                 </div>
                                 {/* Tool count badge */}
@@ -554,7 +545,6 @@ export default function Chat() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                )}
               </div>
               <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-between">
                 {isLoading ? (
