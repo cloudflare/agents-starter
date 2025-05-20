@@ -50,7 +50,7 @@ export default function Chat() {
   const [textareaHeight, setTextareaHeight] = useState("auto");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showAddMcpDialog, setShowAddMcpDialog] = useState(false);
-  type McpConnection = { id: string; url: string; connectionState: string; authUrl?: string };
+  type McpConnection = { id: string; url: string; connectionState: string; authUrl?: string; tools?: unknown[] };
   const [mcpConnections, setMcpConnections] = useState<McpConnection[]>([]);
 
   const scrollToBottom = useCallback(() => {
@@ -130,12 +130,13 @@ export default function Chat() {
       },
       { method: "GET" }
     );
-    const data = (await res.json()) as { mcpConnections: Record<string, { url: string; connectionState: string; authUrl?: string }> };
+    const data = (await res.json()) as { mcpConnections: Record<string, { url: string; connectionState: string; authUrl?: string; tools?: unknown[] }> };
     const connections = Object.entries(data.mcpConnections || {}).map(([id, conn]) => ({
       id,
       url: conn.url,
       connectionState: conn.connectionState,
       authUrl: conn.authUrl,
+      tools: conn.tools,
     }));
     setMcpConnections(connections);
   }, [agent.host]);
@@ -498,7 +499,7 @@ export default function Chat() {
                       align="start"
                       side="top"
                       MenuItems={
-                        mcpConnections.map((conn, idx) => ({
+                        mcpConnections.map((conn) => ({
                           type: "button",
                           label: (
                             <div className="flex items-center w-full justify-between">
@@ -509,8 +510,7 @@ export default function Chat() {
                                 <span className="text-base text-neutral-900">{conn.url}</span>
                               </div>
                               <span className="ml-2 flex items-center justify-center text-xs font-semibold text-blue-600 bg-blue-50 rounded-full px-2 py-0.5 border border-blue-100">
-                                {/* Placeholder tool count, replace with real value if available */}
-                                {idx === 0 ? 36 : idx === 1 ? 89 : 23}
+                                {Array.isArray(conn.tools) ? conn.tools.length : 0}
                               </span>
                             </div>
                           ),
