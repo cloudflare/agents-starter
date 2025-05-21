@@ -468,15 +468,16 @@ export default function Chat() {
                           key={conn.id}
                           className="flex items-center justify-between w-full"
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 w-full">
                             <span className="flex items-center justify-center w-6 h-6 rounded bg-neutral-100 text-neutral-600 font-semibold text-xs border border-neutral-200 mr-2">
                               {(conn.name || conn.url).charAt(0).toUpperCase()}
                             </span>
-                            <span className="text-base text-neutral-900">
-                              {conn.name || conn.url}
-                            </span>
-                            <span
-                              className={`ml-4 text-xs font-medium lowercase tracking-wide align-middle
+                            <div className="flex flex-col">
+                              <span className="text-base text-neutral-900">
+                                {conn.name || conn.url}
+                              </span>
+                              <span
+                                className={`text-xs font-medium lowercase tracking-wide align-middle mt-0.5
                                   ${
                                     conn.connectionState === "ready"
                                       ? "text-green-600"
@@ -486,9 +487,10 @@ export default function Chat() {
                                         : "text-red-600"
                                   }
                                 `}
-                            >
-                              {conn.connectionState}
-                            </span>
+                              >
+                                {conn.connectionState}
+                              </span>
+                            </div>
                           </div>
                           <button
                             type="button"
