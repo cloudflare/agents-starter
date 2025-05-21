@@ -108,7 +108,7 @@ If the user asks to schedule a task, use the schedule tool to schedule the task.
       });
     }
     if (reqUrl.pathname.endsWith("get-mcp-servers") && request.method === "GET") {
-      const mcpServers = await this.getConnections();
+      const mcpServers = this.getConnections();
       return new Response(JSON.stringify({ mcpServers }), {
         headers: { "Content-Type": "application/json" },
       });
