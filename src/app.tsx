@@ -189,7 +189,6 @@ export default function Chat() {
     } catch (e) {
       // ignore if not JSON or no authUrl
     }
-    // No need to fetch, real-time updates will handle it
   };
 
   const handleRemoveMcpConnection = async (id: string) => {
@@ -205,7 +204,6 @@ export default function Chat() {
         body: JSON.stringify({ id }),
       }
     );
-    // No need to fetch, real-time updates will handle it
   };
 
   return (
