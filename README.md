@@ -63,7 +63,7 @@ npm run deploy
 │   ├── server.ts      # Chat agent logic
 │   ├── tools.ts       # Tool definitions
 │   ├── utils.ts       # Helper functions
-│   └── index.css     # UI styling
+│   └── styles.css     # UI styling
 ```
 
 ## Customization Guide
@@ -176,7 +176,7 @@ Commit your changes and then run the `agents-starter` as per the rest of this RE
 
 The chat interface is built with React and can be customized in `app.tsx`:
 
-- Modify the theme colors in `index.css`
+- Modify the theme colors in `styles.css`
 - Add new UI components in the chat container
 - Customize message rendering and tool confirmation dialogs
 - Add new controls to the header
