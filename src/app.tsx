@@ -33,7 +33,7 @@ import {
   Trash,
   PaperPlaneTilt,
   Stop,
-  Sliders
+  Sliders,
 } from "@phosphor-icons/react";
 
 // List of tools that require human confirmation
@@ -47,6 +47,15 @@ if (!sessionId) {
   localStorage.setItem("sessionId", sessionId);
 }
 
+type McpConnection = {
+  id: string;
+  url: string;
+  name?: string;
+  connectionState: string;
+  authUrl?: string;
+  tools?: unknown[];
+};
+
 export default function Chat() {
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     // Check localStorage first, default to dark if not found
@@ -57,7 +66,6 @@ export default function Chat() {
   const [textareaHeight, setTextareaHeight] = useState("auto");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showAddMcpDialog, setShowAddMcpDialog] = useState(false);
-  type McpConnection = { id: string; url: string; name?: string; connectionState: string; authUrl?: string; tools?: unknown[] };
   const [mcpConnections, setMcpConnections] = useState<McpConnection[]>([]);
 
   const scrollToBottom = useCallback(() => {
@@ -104,10 +112,10 @@ export default function Chat() {
     addToolResult,
     clearHistory,
     isLoading,
-    stop
+    stop,
   } = useAgentChat({
     agent,
-    maxSteps: 5
+    maxSteps: 5,
   });
 
   // Scroll to bottom when messages change
@@ -139,7 +147,15 @@ export default function Chat() {
     );
   }
 
-  const handleAddMcpServer = async ({ name, url, localUrl }: { name: string; url: string; localUrl: string }) => {
+  const handleAddMcpServer = async ({
+    name,
+    url,
+    localUrl,
+  }: {
+    name: string;
+    url: string;
+    localUrl: string;
+  }) => {
     const res = await agentFetch(
       {
         host: agent.host,
@@ -154,7 +170,12 @@ export default function Chat() {
     );
     // Try to get authUrl from response
     try {
-      const data = (await res.json()) as { id: string; url: string; connectionState: string; authUrl?: string };
+      const data = (await res.json()) as {
+        id: string;
+        url: string;
+        connectionState: string;
+        authUrl?: string;
+      };
       if (data?.authUrl) {
         openPopup(data.authUrl);
       }
@@ -184,7 +205,9 @@ export default function Chat() {
       <AddMcpServerDialog
         open={showAddMcpDialog}
         onOpenChange={setShowAddMcpDialog}
-        onSubmit={({ name, url }) => handleAddMcpServer({ name, url, localUrl: '' })}
+        onSubmit={({ name, url }) =>
+          handleAddMcpServer({ name, url, localUrl: "" })
+        }
       />
       <div className="h-[calc(100vh-2rem)] w-full mx-auto max-w-lg flex flex-col shadow-xl rounded-md overflow-hidden relative border border-neutral-300 dark:border-neutral-800">
         <div className="px-4 py-3 border-b border-neutral-300 dark:border-neutral-800 flex items-center gap-3 sticky top-0 z-10">
@@ -424,72 +447,83 @@ export default function Chat() {
                 style={{ height: textareaHeight }}
               />
               <div className="absolute bottom-0 left-0 p-2 w-fit flex flex-row justify-between">
-              
-                  <div className="flex justify-between w-full">
-                    {/* Control Panel DropdownMenu (Sliders icon as trigger) */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          type="button"
-                          className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
-                          aria-label="Control Panel"
-                        >
-                          <Sliders size={16} />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="start"
-                        side="top"
-                        className="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-xl rounded-xl p-1 text-base font-medium text-neutral-900 dark:text-white"
+                <div className="flex justify-between w-full">
+                  {/* Control Panel DropdownMenu (Sliders icon as trigger) */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
+                        aria-label="Control Panel"
                       >
-                        <DropdownMenuLabel>MCP Connections</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {mcpConnections.length === 0 && (
-                            <span className="p-3 text-neutral-500 dark:text-neutral-400 text-sm select-none text-center w-full">No MCP servers available.</span>
-                        )}
-                        {mcpConnections.map((conn) => (
-                          <DropdownMenuItem key={conn.id} className="flex items-center justify-between w-full">
-                            <div className="flex items-center gap-2">
-                              <span className="flex items-center justify-center w-6 h-6 rounded bg-neutral-100 text-neutral-600 font-semibold text-xs border border-neutral-200 mr-2">
-                                {(conn.name || conn.url).charAt(0).toUpperCase()}
-                              </span>
-                              <span className="text-base text-neutral-900">{conn.name || conn.url}</span>
-                              <span
-                                className={`ml-4 text-xs font-medium lowercase tracking-wide align-middle
-                                  ${conn.connectionState === "ready"
-                                    ? "text-green-600"
-                                    : conn.connectionState === "authenticating"
-                                    ? "text-yellow-700"
-                                    : "text-red-600"}
-                                `}
-                              >
-                                {conn.connectionState}
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              className="ml-2 text-red-500 hover:text-red-700 transition-colors cursor-pointer"
-                              onClick={e => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                handleRemoveMcpConnection(conn.id);
-                              }}
-                              aria-label="Remove MCP Server"
-                            >
-                              <Trash size={16} />
-                            </button>
-                          </DropdownMenuItem>
-                        ))}
-                        <DropdownMenuSeparator />
+                        <Sliders size={16} />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="start"
+                      side="top"
+                      className="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-xl rounded-xl p-1 text-base font-medium text-neutral-900 dark:text-white"
+                    >
+                      <DropdownMenuLabel>MCP Connections</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {mcpConnections.length === 0 && (
+                        <span className="p-3 text-neutral-500 dark:text-neutral-400 text-sm select-none text-center w-full">
+                          No MCP servers available.
+                        </span>
+                      )}
+                      {mcpConnections.map((conn) => (
                         <DropdownMenuItem
-                          onClick={() => setTimeout(() => setShowAddMcpDialog(true), 0)}
-                          className="bg-primary/5 text-primary rounded-lg font-semibold px-3 py-2 hover:bg-primary/10 transition-colors cursor-pointer"
+                          key={conn.id}
+                          className="flex items-center justify-between w-full"
                         >
-                          + Add MCP Server
+                          <div className="flex items-center gap-2">
+                            <span className="flex items-center justify-center w-6 h-6 rounded bg-neutral-100 text-neutral-600 font-semibold text-xs border border-neutral-200 mr-2">
+                              {(conn.name || conn.url).charAt(0).toUpperCase()}
+                            </span>
+                            <span className="text-base text-neutral-900">
+                              {conn.name || conn.url}
+                            </span>
+                            <span
+                              className={`ml-4 text-xs font-medium lowercase tracking-wide align-middle
+                                  ${
+                                    conn.connectionState === "ready"
+                                      ? "text-green-600"
+                                      : conn.connectionState ===
+                                          "authenticating"
+                                        ? "text-yellow-700"
+                                        : "text-red-600"
+                                  }
+                                `}
+                            >
+                              {conn.connectionState}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            className="ml-2 text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              handleRemoveMcpConnection(conn.id);
+                            }}
+                            aria-label="Remove MCP Server"
+                          >
+                            <Trash size={16} />
+                          </button>
                         </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+                      ))}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() =>
+                          setTimeout(() => setShowAddMcpDialog(true), 0)
+                        }
+                        className="bg-primary/5 text-primary rounded-lg font-semibold px-3 py-2 hover:bg-primary/10 transition-colors cursor-pointer"
+                      >
+                        + Add MCP Server
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
               <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-between">
                 {isLoading ? (
@@ -503,10 +537,12 @@ export default function Chat() {
                   </button>
                 ) : (
                   <div className="flex justify-between w-full">
-                      <button
+                    <button
                       type="submit"
                       className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
-                      disabled={pendingToolCallConfirmation || !agentInput.trim()}
+                      disabled={
+                        pendingToolCallConfirmation || !agentInput.trim()
+                      }
                       aria-label="Send message"
                     >
                       <PaperPlaneTilt size={16} />
@@ -596,21 +632,29 @@ function HasOpenAIKey() {
   return null;
 }
 
-function mapMcpServersToConnections(mcpServersState: any): McpConnection[] {
-  return Object.entries(mcpServersState.servers || {}).map(([id, c]: [string, any]) => ({
-    id,
-    url: c.server_url,
-    name: c.name,
-    connectionState: c.state,
-    authUrl: c.auth_url ?? undefined,
-    tools: Array.isArray(c.tools)
-      ? c.tools
-      : c.tools && typeof c.tools === "object"
-      ? Object.values(c.tools)
-      : c.capabilities && Array.isArray(c.capabilities.tools)
-      ? c.capabilities.tools
-      : c.capabilities && typeof c.capabilities.tools === "object"
-      ? Object.values(c.capabilities.tools)
-      : [],
-  }));
+function mapMcpServersToConnections(
+  mcpServersState: Record<string, unknown>
+): McpConnection[] {
+  return Object.entries((mcpServersState as { servers?: Record<string, unknown> }).servers || {}).map(
+    ([id, c]) => {
+      const server = c as Record<string, unknown>;
+      const capabilities = (server.capabilities as { tools?: unknown }) ?? {};
+      return {
+        id,
+        url: server.server_url as string,
+        name: server.name as string,
+        connectionState: server.state as string,
+        authUrl: (server.auth_url as string) ?? undefined,
+        tools: Array.isArray(server.tools)
+          ? server.tools
+          : server.tools && typeof server.tools === "object"
+            ? Object.values(server.tools)
+            : capabilities && Array.isArray(capabilities.tools)
+              ? capabilities.tools
+              : capabilities && typeof capabilities.tools === "object"
+                ? Object.values(capabilities.tools as object)
+                : [],
+      };
+    }
+  );
 }

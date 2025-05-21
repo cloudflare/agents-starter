@@ -9,14 +9,18 @@ import {
   DialogClose,
 } from "@/components/dialog/dialog";
 import { Button } from "@/components/button/Button";
-import { Input } from "@/components/input/Input";
+import { Input } from "@/components/input/input";
 interface AddMcpServerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: { name: string; url: string; }) => void;
+  onSubmit: (data: { name: string; url: string }) => void;
 }
 
-export function AddMcpServerDialog({ open, onOpenChange, onSubmit }: AddMcpServerDialogProps) {
+export function AddMcpServerDialog({
+  open,
+  onOpenChange,
+  onSubmit,
+}: AddMcpServerDialogProps) {
   const {
     register,
     handleSubmit,
@@ -48,7 +52,12 @@ export function AddMcpServerDialog({ open, onOpenChange, onSubmit }: AddMcpServe
         </DialogHeader>
         <form className="space-y-4 py-2" onSubmit={handleSubmit(onFormSubmit)}>
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="mcp-name">Name</label>
+            <label
+              className="block text-sm font-medium mb-1"
+              htmlFor="mcp-name"
+            >
+              Name
+            </label>
             <Input
               id="mcp-name"
               placeholder="Server Name"
@@ -56,11 +65,15 @@ export function AddMcpServerDialog({ open, onOpenChange, onSubmit }: AddMcpServe
               {...register("name", { required: "Name is required" })}
             />
             {errors.name && (
-              <span className="text-red-500 text-xs mt-1 block">{errors.name.message}</span>
+              <span className="text-red-500 text-xs mt-1 block">
+                {errors.name.message}
+              </span>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="mcp-url">URL</label>
+            <label className="block text-sm font-medium mb-1" htmlFor="mcp-url">
+              URL
+            </label>
             <Input
               id="mcp-url"
               placeholder="https://example.com"
@@ -74,12 +87,19 @@ export function AddMcpServerDialog({ open, onOpenChange, onSubmit }: AddMcpServe
               })}
             />
             {errors.url && (
-              <span className="text-red-500 text-xs mt-1 block">{errors.url.message}</span>
+              <span className="text-red-500 text-xs mt-1 block">
+                {errors.url.message}
+              </span>
             )}
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="secondary" onClick={handleCancel} disabled={isSubmitting}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleCancel}
+                disabled={isSubmitting}
+              >
                 Cancel
               </Button>
             </DialogClose>
@@ -91,4 +111,4 @@ export function AddMcpServerDialog({ open, onOpenChange, onSubmit }: AddMcpServe
       </DialogContent>
     </Dialog>
   );
-} 
+}
