@@ -414,7 +414,6 @@ export default function Chat() {
           className="p-3 bg-neutral-50 absolute bottom-0 left-0 right-0 border-t border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div className="flex items-center gap-2">
-            {/* Settings Icon Button */}
             <div className="flex-1 relative">
               <Textarea
                 disabled={pendingToolCallConfirmation}
@@ -448,7 +447,6 @@ export default function Chat() {
               />
               <div className="absolute bottom-0 left-0 p-2 w-fit flex flex-row justify-between">
                 <div className="flex justify-between w-full">
-                  {/* Control Panel DropdownMenu (Sliders icon as trigger) */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button
