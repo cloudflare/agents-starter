@@ -1,7 +1,7 @@
 {
   "name": "my-chat-agent",
   "main": "src/server.ts",
-  "compatibility_date": "2025-02-04",
+  "compatibility_date": "2025-05-07",
   "compatibility_flags": [
     "nodejs_compat",
     "nodejs_compat_populate_process_env",

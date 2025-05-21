@@ -26,7 +26,7 @@ A starter template for building AI-powered chat agents using Cloudflare's Agent 
 1. Create a new project:
 
 ```bash
-npm create cloudflare@latest -- --template cloudflare/agents-starter
+npx create-cloudflare@latest --template cloudflare/agents-starter
 ```
 
 2. Install dependencies:
