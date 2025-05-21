@@ -10,7 +10,6 @@ import {
 } from "@/components/dialog/dialog";
 import { Button } from "@/components/button/Button";
 import { Input } from "@/components/input/Input";
-import { useForm } from "react-hook-form";
 
 interface AddMcpServerDialogProps {
   open: boolean;
@@ -18,28 +17,52 @@ interface AddMcpServerDialogProps {
   onSubmit: (data: { name: string; url: string; }) => void;
 }
 
-type FormValues = {
-  name: string;
-  url: string;
-};
-
 export function AddMcpServerDialog({ open, onOpenChange, onSubmit }: AddMcpServerDialogProps) {
   const [submitting, setSubmitting] = useState(false);
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<FormValues>({
-    defaultValues: { name: "", url: "" },
-  });
+  const [name, setName] = useState("");
+  const [url, setUrl] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [urlError, setUrlError] = useState<string | null>(null);
 
-  const handleAccept = async (data: FormValues) => {
+  const validate = () => {
+    let valid = true;
+    if (!name.trim()) {
+      setNameError("Name is required");
+      valid = false;
+    } else {
+      setNameError(null);
+    }
+    if (!url.trim()) {
+      setUrlError("URL is required");
+      valid = false;
+    } else if (!/^https?:\/\/.+$/.test(url)) {
+      setUrlError("Enter a valid URL (must start with http(s)://)");
+      valid = false;
+    } else {
+      setUrlError(null);
+    }
+    return valid;
+  };
+
+  const handleAccept = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
     setSubmitting(true);
-    await onSubmit(data);
+    await onSubmit({ name, url });
     setSubmitting(false);
     onOpenChange(false);
-    reset();
+    setName("");
+    setUrl("");
+    setNameError(null);
+    setUrlError(null);
   };
 
   const handleCancel = () => {
     onOpenChange(false);
-    reset();
+    setName("");
+    setUrl("");
+    setNameError(null);
+    setUrlError(null);
   };
 
   return (
@@ -51,7 +74,7 @@ export function AddMcpServerDialog({ open, onOpenChange, onSubmit }: AddMcpServe
             Enter the details for the new MCP server connection.
           </DialogDescription>
         </DialogHeader>
-        <form className="space-y-4 py-2" onSubmit={handleSubmit(handleAccept)}>
+        <form className="space-y-4 py-2" onSubmit={handleAccept}>
           <div>
             <label className="block text-sm font-medium mb-1" htmlFor="mcp-name">Name</label>
             <Input
@@ -59,11 +82,12 @@ export function AddMcpServerDialog({ open, onOpenChange, onSubmit }: AddMcpServe
               className="w-full"
               placeholder="Server Name"
               size="base"
-              {...register("name", { required: "Name is required" })}
-              onValueChange={undefined}
+              value={name}
+              onValueChange={(val) => setName(val)}
+              isValid={!nameError}
             />
-            {errors.name && (
-              <span className="text-red-500 text-xs mt-1 block">{errors.name.message}</span>
+            {nameError && (
+              <span className="text-red-500 text-xs mt-1 block">{nameError}</span>
             )}
           </div>
           <div>
@@ -73,17 +97,12 @@ export function AddMcpServerDialog({ open, onOpenChange, onSubmit }: AddMcpServe
               className="w-full"
               placeholder="https://example.com"
               size="base"
-              {...register("url", {
-                required: "URL is required",
-                pattern: {
-                  value: /^https?:\/\/.+$/,
-                  message: "Enter a valid URL (must start with http(s)://)"
-                }
-              })}
-              onValueChange={undefined}
+              value={url}
+              onValueChange={(val) => setUrl(val)}
+              isValid={!urlError}
             />
-            {errors.url && (
-              <span className="text-red-500 text-xs mt-1 block">{errors.url.message}</span>
+            {urlError && (
+              <span className="text-red-500 text-xs mt-1 block">{urlError}</span>
             )}
           </div>
           <DialogFooter>

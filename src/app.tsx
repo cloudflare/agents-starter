@@ -60,7 +60,7 @@ export default function Chat() {
   const [textareaHeight, setTextareaHeight] = useState("auto");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showAddMcpDialog, setShowAddMcpDialog] = useState(false);
-  type McpConnection = { id: string; url: string; connectionState: string; authUrl?: string; tools?: unknown[] };
+  type McpConnection = { id: string; url: string; name?: string; connectionState: string; authUrl?: string; tools?: unknown[] };
   const [mcpConnections, setMcpConnections] = useState<McpConnection[]>([]);
 
   const scrollToBottom = useCallback(() => {
@@ -114,6 +114,7 @@ export default function Chat() {
         return {
           id,
           url: c.server_url,
+          name: c.name,
           connectionState: c.state,
           authUrl: c.auth_url ?? undefined,
           tools,
@@ -213,7 +214,7 @@ export default function Chat() {
       <AddMcpServerDialog
         open={showAddMcpDialog}
         onOpenChange={setShowAddMcpDialog}
-        onSubmit={handleAddMcpServer}
+        onSubmit={({ name, url }) => handleAddMcpServer({ name, url, localUrl: '' })}
       />
       <div className="h-[calc(100vh-2rem)] w-full mx-auto max-w-lg flex flex-col shadow-xl rounded-md overflow-hidden relative border border-neutral-300 dark:border-neutral-800">
         <div className="px-4 py-3 border-b border-neutral-300 dark:border-neutral-800 flex items-center gap-3 sticky top-0 z-10">
@@ -480,9 +481,9 @@ export default function Chat() {
                           <DropdownMenuItem key={conn.id} className="flex items-center justify-between w-full">
                             <div className="flex items-center gap-2">
                               <span className="flex items-center justify-center w-6 h-6 rounded bg-neutral-100 text-neutral-600 font-semibold text-xs border border-neutral-200 mr-2">
-                                {conn.url.charAt(0).toUpperCase()}
+                                {(conn.name || conn.url).charAt(0).toUpperCase()}
                               </span>
-                              <span className="text-base text-neutral-900">{conn.url}</span>
+                              <span className="text-base text-neutral-900">{conn.name || conn.url}</span>
                               <span
                                 className={`ml-4 text-xs font-medium lowercase tracking-wide align-middle
                                   ${conn.connectionState === "ready"
