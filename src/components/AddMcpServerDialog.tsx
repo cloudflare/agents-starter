@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,6 @@ import {
 } from "@/components/dialog/dialog";
 import { Button } from "@/components/button/Button";
 import { Input } from "@/components/input/Input";
-
 interface AddMcpServerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -18,51 +17,24 @@ interface AddMcpServerDialogProps {
 }
 
 export function AddMcpServerDialog({ open, onOpenChange, onSubmit }: AddMcpServerDialogProps) {
-  const [submitting, setSubmitting] = useState(false);
-  const [name, setName] = useState("");
-  const [url, setUrl] = useState("");
-  const [nameError, setNameError] = useState<string | null>(null);
-  const [urlError, setUrlError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm<{ name: string; url: string }>({
+    defaultValues: { name: "", url: "" },
+  });
 
-  const validate = () => {
-    let valid = true;
-    if (!name.trim()) {
-      setNameError("Name is required");
-      valid = false;
-    } else {
-      setNameError(null);
-    }
-    if (!url.trim()) {
-      setUrlError("URL is required");
-      valid = false;
-    } else if (!/^https?:\/\/.+$/.test(url)) {
-      setUrlError("Enter a valid URL (must start with http(s)://)");
-      valid = false;
-    } else {
-      setUrlError(null);
-    }
-    return valid;
-  };
-
-  const handleAccept = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-    setSubmitting(true);
-    await onSubmit({ name, url });
-    setSubmitting(false);
+  const onFormSubmit = async (data: { name: string; url: string }) => {
+    await onSubmit(data);
     onOpenChange(false);
-    setName("");
-    setUrl("");
-    setNameError(null);
-    setUrlError(null);
+    reset();
   };
 
   const handleCancel = () => {
     onOpenChange(false);
-    setName("");
-    setUrl("");
-    setNameError(null);
-    setUrlError(null);
+    reset();
   };
 
   return (
@@ -74,45 +46,45 @@ export function AddMcpServerDialog({ open, onOpenChange, onSubmit }: AddMcpServe
             Enter the details for the new MCP server connection.
           </DialogDescription>
         </DialogHeader>
-        <form className="space-y-4 py-2" onSubmit={handleAccept}>
+        <form className="space-y-4 py-2" onSubmit={handleSubmit(onFormSubmit)}>
           <div>
             <label className="block text-sm font-medium mb-1" htmlFor="mcp-name">Name</label>
             <Input
               id="mcp-name"
-              className="w-full"
               placeholder="Server Name"
-              size="base"
-              value={name}
-              onValueChange={(val) => setName(val)}
-              isValid={!nameError}
+              aria-invalid={!!errors.name}
+              {...register("name", { required: "Name is required" })}
             />
-            {nameError && (
-              <span className="text-red-500 text-xs mt-1 block">{nameError}</span>
+            {errors.name && (
+              <span className="text-red-500 text-xs mt-1 block">{errors.name.message}</span>
             )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1" htmlFor="mcp-url">URL</label>
             <Input
               id="mcp-url"
-              className="w-full"
               placeholder="https://example.com"
-              size="base"
-              value={url}
-              onValueChange={(val) => setUrl(val)}
-              isValid={!urlError}
+              aria-invalid={!!errors.url}
+              {...register("url", {
+                required: "URL is required",
+                pattern: {
+                  value: /^https?:\/\/.+$/,
+                  message: "Enter a valid URL (must start with http(s)://)",
+                },
+              })}
             />
-            {urlError && (
-              <span className="text-red-500 text-xs mt-1 block">{urlError}</span>
+            {errors.url && (
+              <span className="text-red-500 text-xs mt-1 block">{errors.url.message}</span>
             )}
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting}>
+              <Button type="button" variant="secondary" onClick={handleCancel} disabled={isSubmitting}>
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit" variant="primary" disabled={submitting}>
-              {submitting ? "Adding..." : "Add MCP Server"}
+            <Button type="submit" variant="primary" disabled={isSubmitting}>
+              {isSubmitting ? "Adding..." : "Add MCP Server"}
             </Button>
           </DialogFooter>
         </form>
