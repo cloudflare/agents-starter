@@ -9,7 +9,8 @@ import {
   DialogClose,
 } from "@/components/dialog/dialog";
 import { Button } from "@/components/button/Button";
-import { Input } from "@/components/input/input";
+import type { Input } from "./input/input";
+
 interface AddMcpServerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
