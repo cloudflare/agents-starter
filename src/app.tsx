@@ -90,34 +90,9 @@ export default function Chat() {
 
   const agent = useAgent({
     agent: "chat",
-    name: localStorage.getItem("sessionId") ?? undefined,
+    name: sessionId ?? undefined,
     onMcpUpdate: (mcpServersState) => {
-      // Use the same mapping logic as fetchMcpConnections
-      const connections = Object.entries(mcpServersState.servers || {}).map(([id, conn]) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const c = conn ;
-        let tools: { name?: string }[] = [];
-        if (Array.isArray(c.tools)) {
-          tools = c.tools as { name?: string }[];
-        } else if (c.tools && typeof c.tools === 'object') {
-          tools = Object.values(c.tools) as { name?: string }[];
-        } else if (c.capabilities) {
-          if (Array.isArray(c.capabilities.tools)) {
-            tools = c.capabilities.tools as { name?: string }[];
-          } else if (c.capabilities.tools && typeof c.capabilities.tools === 'object') {
-            tools = Object.values(c.capabilities.tools) as { name?: string }[];
-          }
-        }
-        return {
-          id,
-          url: c.server_url,
-          name: c.name,
-          connectionState: c.state,
-          authUrl: c.auth_url ?? undefined,
-          tools,
-        };
-      });
-      setMcpConnections(connections);
+      setMcpConnections(mapMcpServersToConnections(mcpServersState));
     },
   });
 
@@ -619,4 +594,23 @@ function HasOpenAIKey() {
     );
   }
   return null;
+}
+
+function mapMcpServersToConnections(mcpServersState: any): McpConnection[] {
+  return Object.entries(mcpServersState.servers || {}).map(([id, c]: [string, any]) => ({
+    id,
+    url: c.server_url,
+    name: c.name,
+    connectionState: c.state,
+    authUrl: c.auth_url ?? undefined,
+    tools: Array.isArray(c.tools)
+      ? c.tools
+      : c.tools && typeof c.tools === "object"
+      ? Object.values(c.tools)
+      : c.capabilities && Array.isArray(c.capabilities.tools)
+      ? c.capabilities.tools
+      : c.capabilities && typeof c.capabilities.tools === "object"
+      ? Object.values(c.capabilities.tools)
+      : [],
+  }));
 }
