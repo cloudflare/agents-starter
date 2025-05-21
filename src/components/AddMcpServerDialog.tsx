@@ -46,15 +46,15 @@ export function AddMcpServerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-neutral-100 dark:bg-neutral-900">
         <DialogHeader>
-          <DialogTitle>Add MCP Server</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="dark:text-white">Add MCP Server</DialogTitle>
+          <DialogDescription className="dark:text-neutral-300">
             Enter the details for the new MCP server connection.
           </DialogDescription>
         </DialogHeader>
         <form className="space-y-4 py-2" onSubmit={handleSubmit(onFormSubmit)}>
           <div>
             <label
-              className="block text-sm font-medium mb-1"
+              className="block text-sm font-medium mb-1 text-neutral-900 dark:text-neutral-100"
               htmlFor="mcp-name"
             >
               Name
@@ -66,13 +66,16 @@ export function AddMcpServerDialog({
               {...register("name", { required: "Name is required" })}
             />
             {errors.name && (
-              <span className="text-red-500 text-xs mt-1 block">
+              <span className="text-red-500 dark:text-red-400 text-xs mt-1 block">
                 {errors.name.message}
               </span>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="mcp-url">
+            <label
+              className="block text-sm font-medium mb-1 text-neutral-900 dark:text-neutral-100"
+              htmlFor="mcp-url"
+            >
               URL
             </label>
             <Input
@@ -88,7 +91,7 @@ export function AddMcpServerDialog({
               })}
             />
             {errors.url && (
-              <span className="text-red-500 text-xs mt-1 block">
+              <span className="text-red-500 dark:text-red-400 text-xs mt-1 block">
                 {errors.url.message}
               </span>
             )}
@@ -98,6 +101,7 @@ export function AddMcpServerDialog({
               <Button
                 type="button"
                 variant="secondary"
+                className="dark:bg-neutral-800 dark:border dark:border-neutral-600 dark:text-neutral-100"
                 onClick={handleCancel}
                 disabled={isSubmitting}
               >

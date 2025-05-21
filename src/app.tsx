@@ -466,25 +466,25 @@ export default function Chat() {
                       {mcpConnections.map((conn) => (
                         <DropdownMenuItem
                           key={conn.id}
-                          className="flex items-center justify-between w-full"
+                          className="flex items-center justify-between w-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                         >
                           <div className="flex items-center gap-2 w-full">
-                            <span className="flex items-center justify-center w-6 h-6 rounded bg-neutral-100 text-neutral-600 font-semibold text-xs border border-neutral-200 mr-2">
+                            <span className="flex items-center justify-center w-6 h-6 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 font-semibold text-xs border border-neutral-200 dark:border-neutral-700 mr-2">
                               {(conn.name || conn.url).charAt(0).toUpperCase()}
                             </span>
                             <div className="flex flex-col">
-                              <span className="text-base text-neutral-900">
+                              <span className="text-base text-neutral-900 dark:text-neutral-50">
                                 {conn.name || conn.url}
                               </span>
                               <span
                                 className={`text-xs font-medium lowercase tracking-wide align-middle mt-0.5
                                   ${
                                     conn.connectionState === "ready"
-                                      ? "text-green-600"
+                                      ? "text-green-600 dark:text-green-400"
                                       : conn.connectionState ===
                                           "authenticating"
-                                        ? "text-yellow-700"
-                                        : "text-red-600"
+                                        ? "text-yellow-700 dark:text-yellow-400"
+                                        : "text-red-600 dark:text-red-400"
                                   }
                                 `}
                               >
@@ -494,7 +494,7 @@ export default function Chat() {
                           </div>
                           <button
                             type="button"
-                            className="ml-2 text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+                            className="ml-2 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors cursor-pointer"
                             onClick={(e) => {
                               e.stopPropagation();
                               e.preventDefault();
