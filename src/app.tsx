@@ -443,13 +443,14 @@ export default function Chat() {
                 <div className="flex justify-between w-full">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button
-                        type="button"
-                        className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
+                      <Button
+                        size="sm"
+                        shape="circular"
+                        className="border border-neutral-200 dark:border-neutral-800"
                         aria-label="Control Panel"
                       >
                         <Sliders size={16} />
-                      </button>
+                      </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="start"
@@ -492,9 +493,11 @@ export default function Chat() {
                               </span>
                             </div>
                           </div>
-                          <button
-                            type="button"
-                            className="ml-2 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors cursor-pointer"
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            shape="circular"
+                            className="ml-2"
                             onClick={(e) => {
                               e.stopPropagation();
                               e.preventDefault();
@@ -503,7 +506,7 @@ export default function Chat() {
                             aria-label="Remove MCP Server"
                           >
                             <Trash size={16} />
-                          </button>
+                          </Button>
                         </DropdownMenuItem>
                       ))}
                       <DropdownMenuSeparator />
@@ -521,26 +524,29 @@ export default function Chat() {
               </div>
               <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-between">
                 {isLoading ? (
-                  <button
-                    type="button"
+                  <Button
+                    size="sm"
+                    shape="circular"
+                    className="border border-neutral-200 dark:border-neutral-800"
                     onClick={stop}
-                    className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
                     aria-label="Stop generation"
                   >
                     <Stop size={16} />
-                  </button>
+                  </Button>
                 ) : (
                   <div className="flex justify-between w-full">
-                    <button
-                      type="submit"
-                      className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
+                    <Button
+                      size="sm"
+                      shape="circular"
+                      className="border border-neutral-200 dark:border-neutral-800"
                       disabled={
                         pendingToolCallConfirmation || !agentInput.trim()
                       }
                       aria-label="Send message"
+                      type="submit"
                     >
                       <PaperPlaneTilt size={16} />
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
