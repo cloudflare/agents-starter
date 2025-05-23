@@ -74,12 +74,7 @@ export function AddMcpServerDialog({
             </Label>
           </div>
           <div>
-            <Label
-              htmlFor="mcp-url"
-              title="URL"
-              required
-              isValid={!errors.url}
-            >
+            <Label htmlFor="mcp-url" title="URL" required isValid={!errors.url}>
               <Input
                 id="mcp-url"
                 placeholder="https://example.com"
