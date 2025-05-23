@@ -10,6 +10,7 @@ import {
 } from "@/components/dialog/dialog";
 import { Button } from "@/components/button/Button";
 import { Input } from "@/components/input/Input";
+import { Label } from "@/components/label/Label";
 
 interface AddMcpServerDialogProps {
   open: boolean;
@@ -53,48 +54,50 @@ export function AddMcpServerDialog({
         </DialogHeader>
         <form className="space-y-4 py-2" onSubmit={handleSubmit(onFormSubmit)}>
           <div>
-            <label
-              className="block text-sm font-medium mb-1 text-neutral-900 dark:text-neutral-100"
+            <Label
               htmlFor="mcp-name"
+              title="Name"
+              required
+              isValid={!errors.name}
             >
-              Name
-            </label>
-            <Input
-              id="mcp-name"
-              placeholder="Server Name"
-              aria-invalid={!!errors.name}
-              {...register("name", { required: "Name is required" })}
-            />
-            {errors.name && (
-              <span className="text-red-500 dark:text-red-400 text-xs mt-1 block">
-                {errors.name.message}
-              </span>
-            )}
+              <Input
+                id="mcp-name"
+                placeholder="Server Name"
+                aria-invalid={!!errors.name}
+                {...register("name", { required: "Name is required" })}
+              />
+              {errors.name && (
+                <span className="text-red-500 dark:text-red-400 text-xs mt-1 block">
+                  {errors.name.message}
+                </span>
+              )}
+            </Label>
           </div>
           <div>
-            <label
-              className="block text-sm font-medium mb-1 text-neutral-900 dark:text-neutral-100"
+            <Label
               htmlFor="mcp-url"
+              title="URL"
+              required
+              isValid={!errors.url}
             >
-              URL
-            </label>
-            <Input
-              id="mcp-url"
-              placeholder="https://example.com"
-              aria-invalid={!!errors.url}
-              {...register("url", {
-                required: "URL is required",
-                pattern: {
-                  value: /^https?:\/\/.+$/,
-                  message: "Enter a valid URL (must start with http(s)://)",
-                },
-              })}
-            />
-            {errors.url && (
-              <span className="text-red-500 dark:text-red-400 text-xs mt-1 block">
-                {errors.url.message}
-              </span>
-            )}
+              <Input
+                id="mcp-url"
+                placeholder="https://example.com"
+                aria-invalid={!!errors.url}
+                {...register("url", {
+                  required: "URL is required",
+                  pattern: {
+                    value: /^https?:\/\/.+$/,
+                    message: "Enter a valid URL (must start with http(s)://)",
+                  },
+                })}
+              />
+              {errors.url && (
+                <span className="text-red-500 dark:text-red-400 text-xs mt-1 block">
+                  {errors.url.message}
+                </span>
+              )}
+            </Label>
           </div>
           <DialogFooter>
             <DialogClose asChild>
