@@ -494,7 +494,6 @@ export default function Chat() {
                             </div>
                           </div>
                           <Button
-                            variant="destructive"
                             size="sm"
                             shape="circular"
                             className="ml-2"
