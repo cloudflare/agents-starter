@@ -1,7 +1,5 @@
 import { routeAgentRequest, type Schedule } from "agents";
-
 import { unstable_getSchedulePrompt } from "agents/schedule";
-
 import { AIChatAgent } from "agents/ai-chat-agent";
 import {
   createDataStreamResponse,
@@ -9,6 +7,7 @@ import {
   streamText,
   type StreamTextOnFinishCallback,
   type ToolSet,
+  formatDataStreamPart,
 } from "ai";
 // import { openai } from "@ai-sdk/openai";
 import { createWorkersAI } from 'workers-ai-provider';
@@ -17,6 +16,7 @@ import { tools, executions } from "./tools";
 import { env } from "cloudflare:workers";
 
 const workersai = createWorkersAI({ binding: env.AI });
+
 
 // const model = openai("gpt-4o-2024-11-20");
 // const model = workersai("@cf/deepseek-ai/deepseek-r1-distill-qwen-32b");
@@ -63,17 +63,16 @@ export class Chat extends AIChatAgent<Env> {
           executions,
         });
 
-        // Stream the AI response using GPT-4
+        // Stream the AI response using GPT-4 or workers-ai
         const result = streamText({
           model,
+          messages: processedMessages,
+          tools: allTools,
           system: `You are a helpful assistant that can do various tasks... 
 
 ${unstable_getSchedulePrompt({ date: new Date() })}
 
-If the user asks to schedule a task, use the schedule tool to schedule the task.
-`,
-          messages: processedMessages,
-          tools: allTools,
+If the user asks to schedule a task, use the schedule tool to schedule the task.`,
           onFinish: async (args) => {
             onFinish(
               args as Parameters<StreamTextOnFinishCallback<ToolSet>>[0]
@@ -86,8 +85,30 @@ If the user asks to schedule a task, use the schedule tool to schedule the task.
           maxSteps: 10,
         });
 
-        // Merge the AI response stream with tool execution outputs
-        result.mergeIntoDataStream(dataStream);
+        // Get the stream response
+        const streamResponse = result.toTextStreamResponse({
+          headers: {
+            'Content-Type': 'text/x-unknown',
+            'content-encoding': 'identity',
+            'transfer-encoding': 'chunked',
+          },
+        });
+
+        // Read from the stream and write to the data stream
+        const reader = streamResponse.body?.getReader();
+        if (reader) {
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              // Convert the Uint8Array to text and format it for the data stream
+              const text = new TextDecoder().decode(value);
+              dataStream.write(formatDataStreamPart("text", text));
+            }
+          } finally {
+            reader.releaseLock();
+          }
+        }
       },
     });
 
