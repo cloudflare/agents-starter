@@ -3,6 +3,8 @@ import { useAgent } from "agents/react";
 import { useAgentChat } from "agents/ai-react";
 import type { Message } from "@ai-sdk/react";
 import type { tools } from "./tools";
+import { agentFetch } from "agents/client";
+import { nanoid } from "nanoid";
 
 // Component imports
 import { Button } from "@/components/button/Button";
@@ -12,6 +14,15 @@ import { Toggle } from "@/components/toggle/Toggle";
 import { Textarea } from "@/components/textarea/Textarea";
 import { MemoizedMarkdown } from "@/components/memoized-markdown";
 import { ToolInvocationCard } from "@/components/tool-invocation-card/ToolInvocationCard";
+import { AddMcpServerDialog } from "@/components/AddMcpServerDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/dropdown/DropdownMenu";
 
 // Icon imports
 import {
@@ -22,6 +33,7 @@ import {
   Trash,
   PaperPlaneTilt,
   Stop,
+  Sliders,
 } from "@phosphor-icons/react";
 
 // List of tools that require human confirmation
@@ -29,6 +41,15 @@ import {
 const toolsRequiringConfirmation: (keyof typeof tools)[] = [
   "getWeatherInformation",
 ];
+
+let sessionId = localStorage.getItem("sessionId");
+if (!sessionId) {
+  sessionId = nanoid(8);
+  localStorage.setItem("sessionId", sessionId);
+}
+
+import type { McpConnection } from "./types/mcp";
+import { mapMcpServersToConnections } from "./lib/mcp";
 
 export default function Chat() {
   const [theme, setTheme] = useState<"dark" | "light">(() => {
@@ -39,6 +60,8 @@ export default function Chat() {
   const [showDebug, setShowDebug] = useState(false);
   const [textareaHeight, setTextareaHeight] = useState("auto");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showAddMcpDialog, setShowAddMcpDialog] = useState(false);
+  const [mcpConnections, setMcpConnections] = useState<McpConnection[]>([]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -70,6 +93,10 @@ export default function Chat() {
 
   const agent = useAgent({
     agent: "chat",
+    name: sessionId ?? undefined,
+    onMcpUpdate: (mcpServersState) => {
+      setMcpConnections(mapMcpServersToConnections(mcpServersState));
+    },
   });
 
   const {
@@ -106,9 +133,77 @@ export default function Chat() {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
+  // Helper to open auth popup
+  function openPopup(authUrl: string) {
+    window.open(
+      authUrl,
+      "popupWindow",
+      "width=600,height=800,resizable=yes,scrollbars=yes,toolbar=yes,menubar=no,location=no,directories=no,status=yes"
+    );
+  }
+
+  const handleAddMcpServer = async ({
+    name,
+    url,
+    localUrl,
+  }: {
+    name: string;
+    url: string;
+    localUrl: string;
+  }) => {
+    const res = await agentFetch(
+      {
+        host: agent.host,
+        agent: "chat",
+        name: sessionId!,
+        path: "add-mcp",
+      },
+      {
+        method: "POST",
+        body: JSON.stringify({ url, name, localUrl }),
+      }
+    );
+    // Try to get authUrl from response
+    try {
+      const data = (await res.json()) as {
+        id: string;
+        url: string;
+        connectionState: string;
+        authUrl?: string;
+      };
+      if (data?.authUrl) {
+        openPopup(data.authUrl);
+      }
+    } catch (e) {
+      // ignore if not JSON or no authUrl
+    }
+  };
+
+  const handleRemoveMcpConnection = async (id: string) => {
+    await agentFetch(
+      {
+        host: agent.host,
+        agent: "chat",
+        name: sessionId!,
+        path: "remove-mcp-connection",
+      },
+      {
+        method: "POST",
+        body: JSON.stringify({ id }),
+      }
+    );
+  };
+
   return (
-    <div className="h-[100vh] w-full p-4 flex justify-center items-center bg-fixed overflow-hidden">
+    <div className="h-[100vh] w-full p-4 flex flex-col items-center bg-fixed overflow-hidden">
       <HasOpenAIKey />
+      <AddMcpServerDialog
+        open={showAddMcpDialog}
+        onOpenChange={setShowAddMcpDialog}
+        onSubmit={({ name, url }) =>
+          handleAddMcpServer({ name, url, localUrl: "" })
+        }
+      />
       <div className="h-[calc(100vh-2rem)] w-full mx-auto max-w-lg flex flex-col shadow-xl rounded-md overflow-hidden relative border border-neutral-300 dark:border-neutral-800">
         <div className="px-4 py-3 border-b border-neutral-300 dark:border-neutral-800 flex items-center gap-3 sticky top-0 z-10">
           <div className="flex items-center justify-center h-8 w-8">
@@ -156,7 +251,7 @@ export default function Chat() {
             variant="ghost"
             size="md"
             shape="square"
-            className="rounded-full h-9 w-9"
+            className="rounded-full h-9 w-9 cursor-pointer"
             onClick={clearHistory}
           >
             <Trash size={20} />
@@ -311,7 +406,7 @@ export default function Chat() {
             });
             setTextareaHeight("auto"); // Reset height after submission
           }}
-          className="p-3 bg-neutral-50 absolute bottom-0 left-0 right-0 z-10 border-t border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900"
+          className="p-3 bg-neutral-50 absolute bottom-0 left-0 right-0 border-t border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div className="flex items-center gap-2">
             <div className="flex-1 relative">
@@ -345,25 +440,114 @@ export default function Chat() {
                 rows={2}
                 style={{ height: textareaHeight }}
               />
-              <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
+              <div className="absolute bottom-0 left-0 p-2 w-fit flex flex-row justify-between">
+                <div className="flex justify-between w-full">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="sm"
+                        shape="circular"
+                        className="border border-neutral-200 dark:border-neutral-800"
+                        aria-label="Control Panel"
+                      >
+                        <Sliders size={16} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="start"
+                      side="top"
+                      className="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-xl rounded-xl p-1 text-base font-medium text-neutral-900 dark:text-white"
+                    >
+                      <DropdownMenuLabel>MCP Connections</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {mcpConnections.length === 0 && (
+                        <span className="p-3 text-neutral-500 dark:text-neutral-400 text-sm select-none text-center w-full">
+                          No MCP servers available.
+                        </span>
+                      )}
+                      {mcpConnections.map((conn) => (
+                        <DropdownMenuItem
+                          key={conn.id}
+                          className="flex items-center justify-between w-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                        >
+                          <div className="flex items-center gap-2 w-full">
+                            <span className="flex items-center justify-center w-6 h-6 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 font-semibold text-xs border border-neutral-200 dark:border-neutral-700 mr-2">
+                              {(conn.name || conn.url).charAt(0).toUpperCase()}
+                            </span>
+                            <div className="flex flex-col">
+                              <span className="text-base text-neutral-900 dark:text-neutral-50">
+                                {conn.name || conn.url}
+                              </span>
+                              <span
+                                className={`text-xs font-medium lowercase tracking-wide align-middle mt-0.5
+                                  ${
+                                    conn.connectionState === "ready"
+                                      ? "text-green-600 dark:text-green-400"
+                                      : conn.connectionState ===
+                                          "authenticating"
+                                        ? "text-yellow-700 dark:text-yellow-400"
+                                        : "text-red-600 dark:text-red-400"
+                                  }
+                                `}
+                              >
+                                {conn.connectionState}
+                              </span>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            shape="circular"
+                            className="ml-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              handleRemoveMcpConnection(conn.id);
+                            }}
+                            aria-label="Remove MCP Server"
+                          >
+                            <Trash size={16} />
+                          </Button>
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() =>
+                          setTimeout(() => setShowAddMcpDialog(true), 0)
+                        }
+                        className="bg-primary/5 text-primary rounded-lg font-semibold px-3 py-2 hover:bg-primary/10 transition-colors cursor-pointer"
+                      >
+                        + Add MCP Server
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+              <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-between">
                 {isLoading ? (
-                  <button
-                    type="button"
+                  <Button
+                    size="sm"
+                    shape="circular"
+                    className="border border-neutral-200 dark:border-neutral-800"
                     onClick={stop}
-                    className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
                     aria-label="Stop generation"
                   >
                     <Stop size={16} />
-                  </button>
+                  </Button>
                 ) : (
-                  <button
-                    type="submit"
-                    className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
-                    disabled={pendingToolCallConfirmation || !agentInput.trim()}
-                    aria-label="Send message"
-                  >
-                    <PaperPlaneTilt size={16} />
-                  </button>
+                  <div className="flex justify-between w-full">
+                    <Button
+                      size="sm"
+                      shape="circular"
+                      className="border border-neutral-200 dark:border-neutral-800"
+                      disabled={
+                        pendingToolCallConfirmation || !agentInput.trim()
+                      }
+                      aria-label="Send message"
+                      type="submit"
+                    >
+                      <PaperPlaneTilt size={16} />
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
