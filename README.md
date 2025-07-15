@@ -184,7 +184,6 @@ The chat interface is built with React and can be customized in `app.tsx`:
 ### Example Use Cases
 
 1. **Customer Support Agent**
-
    - Add tools for:
      - Ticket creation/lookup
      - Order status checking
@@ -192,7 +191,6 @@ The chat interface is built with React and can be customized in `app.tsx`:
      - FAQ database search
 
 2. **Development Assistant**
-
    - Integrate tools for:
      - Code linting
      - Git operations
@@ -200,7 +198,6 @@ The chat interface is built with React and can be customized in `app.tsx`:
      - Dependency checking
 
 3. **Data Analysis Assistant**
-
    - Build tools for:
      - Database querying
      - Data visualization
@@ -208,7 +205,6 @@ The chat interface is built with React and can be customized in `app.tsx`:
      - Report generation
 
 4. **Personal Productivity Assistant**
-
    - Implement tools for:
      - Task scheduling with flexible timing options
      - One-time, delayed, and recurring task management
