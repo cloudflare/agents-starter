@@ -119,7 +119,6 @@ export default function Chat() {
               data-icon="agents"
             >
               <title>Cloudflare Agents</title>
-              {/** biome-ignore lint/nursery/useUniqueElementIds: it's fine */}
               <symbol id="ai:local:agents" viewBox="0 0 80 79">
                 <path
                   fill="currentColor"
@@ -400,7 +399,6 @@ function HasOpenAIKey() {
                   strokeLinejoin="round"
                   aria-labelledby="warningIcon"
                 >
-                  {/** biome-ignore lint/nursery/useUniqueElementIds: it's fine */}
                   <title id="warningIcon">Warning Icon</title>
                   <circle cx="12" cy="12" r="10" />
                   <line x1="12" y1="8" x2="12" y2="12" />
