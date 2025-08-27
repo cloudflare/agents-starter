@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+import { useId } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,8 @@ export function AddMcpServerDialog({
   onOpenChange,
   onSubmit
 }: AddMcpServerDialogProps) {
+  const nameId = useId();
+  const urlId = useId();
   const {
     register,
     handleSubmit,
@@ -55,13 +58,13 @@ export function AddMcpServerDialog({
         <form className="space-y-4 py-2" onSubmit={handleSubmit(onFormSubmit)}>
           <div>
             <Label
-              htmlFor="mcp-name"
+              htmlFor={nameId}
               title="Name"
               required
               isValid={!errors.name}
             >
               <Input
-                id="mcp-name"
+                id={nameId}
                 placeholder="Server Name"
                 aria-invalid={!!errors.name}
                 {...register("name", { required: "Name is required" })}
@@ -74,9 +77,9 @@ export function AddMcpServerDialog({
             </Label>
           </div>
           <div>
-            <Label htmlFor="mcp-url" title="URL" required isValid={!errors.url}>
+            <Label htmlFor={urlId} title="URL" required isValid={!errors.url}>
               <Input
-                id="mcp-url"
+                id={urlId}
                 placeholder="https://example.com"
                 aria-invalid={!!errors.url}
                 {...register("url", {
