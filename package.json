@@ -9,8 +9,8 @@
     "deploy": "vite build && wrangler deploy",
     "test": "vitest",
     "types": "wrangler types",
-    "format": "prettier --write .",
-    "check": "prettier . --check && biome lint && tsc"
+    "format": "npx prettier --write .",
+    "check": "npx prettier . --check && npx @biomejs/biome lint && npx tsc --noEmit"
   },
   "keywords": [
     "cloudflare",
