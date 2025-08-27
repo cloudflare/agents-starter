@@ -6,7 +6,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
+  DialogClose
 } from "@/components/dialog/dialog";
 import { Button } from "@/components/button/Button";
 import { Input } from "@/components/input/Input";
@@ -21,15 +21,15 @@ interface AddMcpServerDialogProps {
 export function AddMcpServerDialog({
   open,
   onOpenChange,
-  onSubmit,
+  onSubmit
 }: AddMcpServerDialogProps) {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    reset,
+    reset
   } = useForm<{ name: string; url: string }>({
-    defaultValues: { name: "", url: "" },
+    defaultValues: { name: "", url: "" }
   });
 
   const onFormSubmit = async (data: { name: string; url: string }) => {
@@ -83,8 +83,8 @@ export function AddMcpServerDialog({
                   required: "URL is required",
                   pattern: {
                     value: /^https?:\/\/.+$/,
-                    message: "Enter a valid URL (must start with http(s)://)",
-                  },
+                    message: "Enter a valid URL (must start with http(s)://)"
+                  }
                 })}
               />
               {errors.url && (

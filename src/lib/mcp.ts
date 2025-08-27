@@ -22,7 +22,7 @@ export function mapMcpServersToConnections(
             ? capabilities.tools
             : capabilities && typeof capabilities.tools === "object"
               ? Object.values(capabilities.tools as object)
-              : [],
+              : []
     };
   });
 }

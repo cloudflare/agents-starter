@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/dropdown/DropdownMenu";
 
 // Icon imports
@@ -33,12 +33,12 @@ import {
   Trash,
   PaperPlaneTilt,
   Stop,
-  Sliders,
+  Sliders
 } from "@phosphor-icons/react";
 
 // List of tools that require human confirmation
 const toolsRequiringConfirmation: (keyof typeof tools)[] = [
-  "getWeatherInformation",
+  "getWeatherInformation"
 ];
 
 let sessionId = localStorage.getItem("sessionId");
@@ -95,7 +95,7 @@ export default function Chat() {
     name: sessionId ?? undefined,
     onMcpUpdate: (mcpServersState) => {
       setMcpConnections(mapMcpServersToConnections(mcpServersState));
-    },
+    }
   });
 
   const {
@@ -106,10 +106,10 @@ export default function Chat() {
     addToolResult,
     clearHistory,
     isLoading,
-    stop,
+    stop
   } = useAgentChat({
     agent,
-    maxSteps: 5,
+    maxSteps: 5
   });
 
   // Scroll to bottom when messages change
@@ -144,7 +144,7 @@ export default function Chat() {
   const handleAddMcpServer = async ({
     name,
     url,
-    localUrl,
+    localUrl
   }: {
     name: string;
     url: string;
@@ -155,11 +155,11 @@ export default function Chat() {
         host: agent.host,
         agent: "chat",
         name: sessionId!,
-        path: "add-mcp",
+        path: "add-mcp"
       },
       {
         method: "POST",
-        body: JSON.stringify({ url, name, localUrl }),
+        body: JSON.stringify({ url, name, localUrl })
       }
     );
     // Try to get authUrl from response
@@ -173,7 +173,7 @@ export default function Chat() {
       if (data?.authUrl) {
         openPopup(data.authUrl);
       }
-    } catch (e) {
+    } catch (_e) {
       // ignore if not JSON or no authUrl
     }
   };
@@ -184,11 +184,11 @@ export default function Chat() {
         host: agent.host,
         agent: "chat",
         name: sessionId!,
-        path: "remove-mcp-connection",
+        path: "remove-mcp-connection"
       },
       {
         method: "POST",
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id })
       }
     );
   };
@@ -399,9 +399,9 @@ export default function Chat() {
             handleAgentSubmit(e, {
               data: {
                 annotations: {
-                  hello: "world",
-                },
-              },
+                  hello: "world"
+                }
+              }
             });
             setTextareaHeight("auto"); // Reset height after submission
           }}

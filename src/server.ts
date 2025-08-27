@@ -108,7 +108,7 @@ If the user asks to schedule a task, use the schedule tool to schedule the task.
       );
       return new Response(JSON.stringify(mcpConnection), {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" }
       });
     }
     if (
@@ -117,7 +117,7 @@ If the user asks to schedule a task, use the schedule tool to schedule the task.
     ) {
       const mcpConnections = this.mcp.mcpConnections;
       return new Response(JSON.stringify({ mcpConnections }), {
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" }
       });
     }
     if (
@@ -126,12 +126,12 @@ If the user asks to schedule a task, use the schedule tool to schedule the task.
     ) {
       const mcpServers = this.getConnections();
       return new Response(JSON.stringify({ mcpServers }), {
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" }
       });
     }
     if (reqUrl.pathname.endsWith("get-messages") && request.method === "GET") {
       return new Response(JSON.stringify(this.messages), {
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" }
       });
     }
     if (
