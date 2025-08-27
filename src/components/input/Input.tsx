@@ -1,115 +1,18 @@
 import { cn } from "@/lib/utils";
-import { useMemo, useRef, useState } from "react";
 
-export const inputClasses = cn(
-  "bg-ob-btn-secondary-bg text-ob-base-300 border-ob-border focus:border-ob-border-active placeholder:text-ob-base-100 add-disable border border-1 transition-colors focus:outline-none"
-);
-
-export type InputProps = Omit<
-  React.InputHTMLAttributes<HTMLInputElement>,
-  "size"
-> & {
-  children?: React.ReactNode;
-  className?: string;
-  displayContent?: "items-first" | "items-last"; // used for children of component
-  initialValue?: string;
-  isValid?: boolean;
-  onValueChange: ((value: string, isValid: boolean) => void) | undefined;
-  preText?: string[] | React.ReactNode[] | React.ReactNode;
-  postText?: string[] | React.ReactNode[] | React.ReactNode;
-  size?: "sm" | "md" | "base";
-};
-
-export const Input = ({
-  children,
-  className,
-  displayContent,
-  initialValue,
-  isValid = true,
-  onValueChange,
-  preText,
-  postText,
-  size = "base",
-  ...props
-}: InputProps) => {
-  const [currentValue, setCurrentValue] = useState(initialValue ?? "");
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
-  useMemo(() => {
-    setCurrentValue(initialValue ?? "");
-  }, [initialValue]);
-
-  const updateCurrentValue = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = event.target.value;
-    setCurrentValue(newValue);
-
-    if (onValueChange) {
-      if (!props.min) {
-        onValueChange(newValue, isValid);
-      } else if (typeof props.min === "number") {
-        onValueChange(newValue.slice(0, props.min), isValid);
-      }
-    }
-  };
-
-  const handlePreTextInputClick = () => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  };
-
-  return preText ? (
-    // biome-ignore lint/a11y/useKeyWithClickEvents: todo
-    // biome-ignore lint/a11y/noStaticElementInteractions: todo
-    <div
-      className={cn(
-        "has-[:disabled]:ob-disable has-[:enabled]:active:border-ob-border-active has-[:focus]:border-ob-border-active flex cursor-text",
-        inputClasses,
-        {
-          "add-size-sm": size === "sm",
-          "add-size-md": size === "md",
-          "add-size-base": size === "base"
-        },
-        className
-      )}
-      onClick={handlePreTextInputClick}
-    >
-      <span className="text-ob-base-200 pointer-events-none mr-0.5 flex items-center gap-2 transition-colors select-none">
-        {preText}
-      </span>
-
-      <input
-        className={cn(
-          "placeholder:text-ob-base-100 w-full bg-transparent focus:outline-none",
-          {
-            "text-ob-destructive": !isValid
-          }
-        )}
-        onChange={updateCurrentValue}
-        ref={inputRef}
-        value={currentValue}
-        {...props}
-      />
-
-      <span className="text-ob-base-200 mr-0.5 flex items-center gap-2 transition-colors select-none">
-        {postText}
-      </span>
-    </div>
-  ) : (
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  return (
     <input
+      type={type}
+      data-slot="input"
       className={cn(
-        inputClasses,
-        {
-          "text-ob-destructive transition-colors": !isValid,
-          "add-size-sm": size === "sm",
-          "add-size-md": size === "md",
-          "add-size-base": size === "base"
-        },
+        "file:text-neutral-900 dark:file:text-neutral-100 placeholder:text-neutral-500 dark:placeholder:text-neutral-400 selection:bg-neutral-800 selection:text-neutral-100 bg-neutral-50 dark:bg-neutral-800 flex h-9 w-full min-w-0 rounded-md border border-neutral-200 dark:border-neutral-600 px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm ring-offset-neutral-100 dark:ring-offset-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 dark:focus-visible:ring-neutral-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-900 text-neutral-900 dark:text-neutral-100",
+        "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
         className
       )}
-      onChange={updateCurrentValue}
-      value={currentValue}
       {...props}
     />
   );
-};
+}
+
+export { Input };

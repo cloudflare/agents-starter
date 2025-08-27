@@ -1,8 +1,10 @@
-import { useEffect, useState, useRef, useCallback, use } from "react";
+import { useEffect, useState, useRef, useCallback, use, useId } from "react";
 import { useAgent } from "agents/react";
 import { useAgentChat } from "agents/ai-react";
 import type { Message } from "@ai-sdk/react";
 import type { tools } from "./tools";
+import { agentFetch } from "agents/client";
+import { nanoid } from "nanoid";
 
 // Component imports
 import { Button } from "@/components/button/Button";
@@ -12,6 +14,15 @@ import { Toggle } from "@/components/toggle/Toggle";
 import { Textarea } from "@/components/textarea/Textarea";
 import { MemoizedMarkdown } from "@/components/memoized-markdown";
 import { ToolInvocationCard } from "@/components/tool-invocation-card/ToolInvocationCard";
+import { AddMcpServerDialog } from "@/components/AddMcpServerDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/dropdown/DropdownMenu";
 
 // Icon imports
 import {
@@ -21,14 +32,23 @@ import {
   Sun,
   Trash,
   PaperPlaneTilt,
-  Stop
+  Stop,
+  Sliders
 } from "@phosphor-icons/react";
 
 // List of tools that require human confirmation
-// NOTE: this should match the keys in the executions object in tools.ts
 const toolsRequiringConfirmation: (keyof typeof tools)[] = [
   "getWeatherInformation"
 ];
+
+let sessionId = localStorage.getItem("sessionId");
+if (!sessionId) {
+  sessionId = nanoid(8);
+  localStorage.setItem("sessionId", sessionId);
+}
+
+import type { McpConnection } from "./types/mcp";
+import { mapMcpServersToConnections } from "./lib/mcp";
 
 export default function Chat() {
   const [theme, setTheme] = useState<"dark" | "light">(() => {
@@ -39,6 +59,11 @@ export default function Chat() {
   const [showDebug, setShowDebug] = useState(false);
   const [textareaHeight, setTextareaHeight] = useState("auto");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showAddMcpDialog, setShowAddMcpDialog] = useState(false);
+  const [mcpConnections, setMcpConnections] = useState<McpConnection[]>([]);
+
+  // Generate unique IDs for SVG elements
+  const agentsIconId = useId();
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -69,7 +94,11 @@ export default function Chat() {
   };
 
   const agent = useAgent({
-    agent: "chat"
+    agent: "chat",
+    name: sessionId ?? undefined,
+    onMcpUpdate: (mcpServersState) => {
+      setMcpConnections(mapMcpServersToConnections(mcpServersState));
+    }
   });
 
   const {
@@ -106,9 +135,77 @@ export default function Chat() {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
+  // Helper to open auth popup
+  function openPopup(authUrl: string) {
+    window.open(
+      authUrl,
+      "popupWindow",
+      "width=600,height=800,resizable=yes,scrollbars=yes,toolbar=yes,menubar=no,location=no,directories=no,status=yes"
+    );
+  }
+
+  const handleAddMcpServer = async ({
+    name,
+    url,
+    localUrl
+  }: {
+    name: string;
+    url: string;
+    localUrl: string;
+  }) => {
+    const res = await agentFetch(
+      {
+        host: agent.host,
+        agent: "chat",
+        name: sessionId!,
+        path: "add-mcp"
+      },
+      {
+        method: "POST",
+        body: JSON.stringify({ url, name, localUrl })
+      }
+    );
+    // Try to get authUrl from response
+    try {
+      const data = (await res.json()) as {
+        id: string;
+        url: string;
+        connectionState: string;
+        authUrl?: string;
+      };
+      if (data?.authUrl) {
+        openPopup(data.authUrl);
+      }
+    } catch (_e) {
+      // ignore if not JSON or no authUrl
+    }
+  };
+
+  const handleRemoveMcpConnection = async (id: string) => {
+    await agentFetch(
+      {
+        host: agent.host,
+        agent: "chat",
+        name: sessionId!,
+        path: "remove-mcp-connection"
+      },
+      {
+        method: "POST",
+        body: JSON.stringify({ id })
+      }
+    );
+  };
+
   return (
-    <div className="h-[100vh] w-full p-4 flex justify-center items-center bg-fixed overflow-hidden">
+    <div className="h-[100vh] w-full p-4 flex flex-col items-center bg-fixed overflow-hidden">
       <HasOpenAIKey />
+      <AddMcpServerDialog
+        open={showAddMcpDialog}
+        onOpenChange={setShowAddMcpDialog}
+        onSubmit={({ name, url }) =>
+          handleAddMcpServer({ name, url, localUrl: "" })
+        }
+      />
       <div className="h-[calc(100vh-2rem)] w-full mx-auto max-w-lg flex flex-col shadow-xl rounded-md overflow-hidden relative border border-neutral-300 dark:border-neutral-800">
         <div className="px-4 py-3 border-b border-neutral-300 dark:border-neutral-800 flex items-center gap-3 sticky top-0 z-10">
           <div className="flex items-center justify-center h-8 w-8">
@@ -119,13 +216,13 @@ export default function Chat() {
               data-icon="agents"
             >
               <title>Cloudflare Agents</title>
-              <symbol id="ai:local:agents" viewBox="0 0 80 79">
+              <symbol id={agentsIconId} viewBox="0 0 80 79">
                 <path
                   fill="currentColor"
                   d="M69.3 39.7c-3.1 0-5.8 2.1-6.7 5H48.3V34h4.6l4.5-2.5c1.1.8 2.5 1.2 3.9 1.2 3.8 0 7-3.1 7-7s-3.1-7-7-7-7 3.1-7 7c0 .9.2 1.8.5 2.6L51.9 30h-3.5V18.8h-.1c-1.3-1-2.9-1.6-4.5-1.9h-.2c-1.9-.3-3.9-.1-5.8.6-.4.1-.8.3-1.2.5h-.1c-.1.1-.2.1-.3.2-1.7 1-3 2.4-4 4 0 .1-.1.2-.1.2l-.3.6c0 .1-.1.1-.1.2v.1h-.6c-2.9 0-5.7 1.2-7.7 3.2-2.1 2-3.2 4.8-3.2 7.7 0 .7.1 1.4.2 2.1-1.3.9-2.4 2.1-3.2 3.5s-1.2 2.9-1.4 4.5c-.1 1.6.1 3.2.7 4.7s1.5 2.9 2.6 4c-.8 1.8-1.2 3.7-1.1 5.6 0 1.9.5 3.8 1.4 5.6s2.1 3.2 3.6 4.4c1.3 1 2.7 1.7 4.3 2.2v-.1q2.25.75 4.8.6h.1c0 .1.1.1.1.1.9 1.7 2.3 3 4 4 .1.1.2.1.3.2h.1c.4.2.8.4 1.2.5 1.4.6 3 .8 4.5.7.4 0 .8-.1 1.3-.1h.1c1.6-.3 3.1-.9 4.5-1.9V62.9h3.5l3.1 1.7c-.3.8-.5 1.7-.5 2.6 0 3.8 3.1 7 7 7s7-3.1 7-7-3.1-7-7-7c-1.5 0-2.8.5-3.9 1.2l-4.6-2.5h-4.6V48.7h14.3c.9 2.9 3.5 5 6.7 5 3.8 0 7-3.1 7-7s-3.1-7-7-7m-7.9-16.9c1.6 0 3 1.3 3 3s-1.3 3-3 3-3-1.3-3-3 1.4-3 3-3m0 41.4c1.6 0 3 1.3 3 3s-1.3 3-3 3-3-1.3-3-3 1.4-3 3-3M44.3 72c-.4.2-.7.3-1.1.3-.2 0-.4.1-.5.1h-.2c-.9.1-1.7 0-2.6-.3-1-.3-1.9-.9-2.7-1.7-.7-.8-1.3-1.7-1.6-2.7l-.3-1.5v-.7q0-.75.3-1.5c.1-.2.1-.4.2-.7s.3-.6.5-.9c0-.1.1-.1.1-.2.1-.1.1-.2.2-.3s.1-.2.2-.3c0 0 0-.1.1-.1l.6-.6-2.7-3.5c-1.3 1.1-2.3 2.4-2.9 3.9-.2.4-.4.9-.5 1.3v.1c-.1.2-.1.4-.1.6-.3 1.1-.4 2.3-.3 3.4-.3 0-.7 0-1-.1-2.2-.4-4.2-1.5-5.5-3.2-1.4-1.7-2-3.9-1.8-6.1q.15-1.2.6-2.4l.3-.6c.1-.2.2-.4.3-.5 0 0 0-.1.1-.1.4-.7.9-1.3 1.5-1.9 1.6-1.5 3.8-2.3 6-2.3q1.05 0 2.1.3v-4.5c-.7-.1-1.4-.2-2.1-.2-1.8 0-3.5.4-5.2 1.1-.7.3-1.3.6-1.9 1s-1.1.8-1.7 1.3c-.3.2-.5.5-.8.8-.6-.8-1-1.6-1.3-2.6-.2-1-.2-2 0-2.9.2-1 .6-1.9 1.3-2.6.6-.8 1.4-1.4 2.3-1.8l1.8-.9-.7-1.9c-.4-1-.5-2.1-.4-3.1s.5-2.1 1.1-2.9q.9-1.35 2.4-2.1c.9-.5 2-.8 3-.7.5 0 1 .1 1.5.2 1 .2 1.8.7 2.6 1.3s1.4 1.4 1.8 2.3l4.1-1.5c-.9-2-2.3-3.7-4.2-4.9q-.6-.3-.9-.6c.4-.7 1-1.4 1.6-1.9.8-.7 1.8-1.1 2.9-1.3.9-.2 1.7-.1 2.6 0 .4.1.7.2 1.1.3V72zm25-22.3c-1.6 0-3-1.3-3-3 0-1.6 1.3-3 3-3s3 1.3 3 3c0 1.6-1.3 3-3 3"
                 />
               </symbol>
-              <use href="#ai:local:agents" />
+              <use href={`#${agentsIconId}`} />
             </svg>
           </div>
 
@@ -156,7 +253,7 @@ export default function Chat() {
             variant="ghost"
             size="md"
             shape="square"
-            className="rounded-full h-9 w-9"
+            className="rounded-full h-9 w-9 cursor-pointer"
             onClick={clearHistory}
           >
             <Trash size={20} />
@@ -311,7 +408,7 @@ export default function Chat() {
             });
             setTextareaHeight("auto"); // Reset height after submission
           }}
-          className="p-3 bg-neutral-50 absolute bottom-0 left-0 right-0 z-10 border-t border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900"
+          className="p-3 bg-neutral-50 absolute bottom-0 left-0 right-0 border-t border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div className="flex items-center gap-2">
             <div className="flex-1 relative">
@@ -322,7 +419,7 @@ export default function Chat() {
                     ? "Please respond to the tool confirmation above..."
                     : "Send a message..."
                 }
-                className="flex w-full border border-neutral-200 dark:border-neutral-700 px-3 py-2  ring-offset-background placeholder:text-neutral-500 dark:placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 dark:focus-visible:ring-neutral-700 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-900 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base pb-10 dark:bg-neutral-900"
+                className="flex w-full border border-neutral-200 dark:border-neutral-700 px-3 py-2 text-base ring-offset-background placeholder:text-neutral-500 dark:placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 dark:focus-visible:ring-neutral-700 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-900 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base pb-10 dark:bg-neutral-900"
                 value={agentInput}
                 onChange={(e) => {
                   handleAgentInputChange(e);
@@ -345,25 +442,114 @@ export default function Chat() {
                 rows={2}
                 style={{ height: textareaHeight }}
               />
-              <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
+              <div className="absolute bottom-0 left-0 p-2 w-fit flex flex-row justify-between">
+                <div className="flex justify-between w-full">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="sm"
+                        shape="circular"
+                        className="border border-neutral-200 dark:border-neutral-800"
+                        aria-label="Control Panel"
+                      >
+                        <Sliders size={16} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="start"
+                      side="top"
+                      className="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-xl rounded-xl p-1 text-base font-medium text-neutral-900 dark:text-white"
+                    >
+                      <DropdownMenuLabel>MCP Connections</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {mcpConnections.length === 0 && (
+                        <span className="p-3 text-neutral-500 dark:text-neutral-400 text-sm select-none text-center w-full">
+                          No MCP servers available.
+                        </span>
+                      )}
+                      {mcpConnections.map((conn) => (
+                        <DropdownMenuItem
+                          key={conn.id}
+                          className="flex items-center justify-between w-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                        >
+                          <div className="flex items-center gap-2 w-full">
+                            <span className="flex items-center justify-center w-6 h-6 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 font-semibold text-xs border border-neutral-200 dark:border-neutral-700 mr-2">
+                              {(conn.name || conn.url).charAt(0).toUpperCase()}
+                            </span>
+                            <div className="flex flex-col">
+                              <span className="text-base text-neutral-900 dark:text-neutral-50">
+                                {conn.name || conn.url}
+                              </span>
+                              <span
+                                className={`text-xs font-medium lowercase tracking-wide align-middle mt-0.5
+                                  ${
+                                    conn.connectionState === "ready"
+                                      ? "text-green-600 dark:text-green-400"
+                                      : conn.connectionState ===
+                                          "authenticating"
+                                        ? "text-yellow-700 dark:text-yellow-400"
+                                        : "text-red-600 dark:text-red-400"
+                                  }
+                                `}
+                              >
+                                {conn.connectionState}
+                              </span>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            shape="circular"
+                            className="ml-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              handleRemoveMcpConnection(conn.id);
+                            }}
+                            aria-label="Remove MCP Server"
+                          >
+                            <Trash size={16} />
+                          </Button>
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() =>
+                          setTimeout(() => setShowAddMcpDialog(true), 0)
+                        }
+                        className="bg-primary/5 text-primary rounded-lg font-semibold px-3 py-2 hover:bg-primary/10 transition-colors cursor-pointer"
+                      >
+                        + Add MCP Server
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+              <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-between">
                 {isLoading ? (
-                  <button
-                    type="button"
+                  <Button
+                    size="sm"
+                    shape="circular"
+                    className="border border-neutral-200 dark:border-neutral-800"
                     onClick={stop}
-                    className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
                     aria-label="Stop generation"
                   >
                     <Stop size={16} />
-                  </button>
+                  </Button>
                 ) : (
-                  <button
-                    type="submit"
-                    className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
-                    disabled={pendingToolCallConfirmation || !agentInput.trim()}
-                    aria-label="Send message"
-                  >
-                    <PaperPlaneTilt size={16} />
-                  </button>
+                  <div className="flex justify-between w-full">
+                    <Button
+                      size="sm"
+                      shape="circular"
+                      className="border border-neutral-200 dark:border-neutral-800"
+                      disabled={
+                        pendingToolCallConfirmation || !agentInput.trim()
+                      }
+                      aria-label="Send message"
+                      type="submit"
+                    >
+                      <PaperPlaneTilt size={16} />
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
@@ -379,6 +565,7 @@ const hasOpenAiKeyPromise = fetch("/check-open-ai-key").then((res) =>
 );
 
 function HasOpenAIKey() {
+  const warningIconId = useId();
   const hasOpenAiKey = use(hasOpenAiKeyPromise);
 
   if (!hasOpenAiKey.success) {
@@ -397,9 +584,9 @@ function HasOpenAIKey() {
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  aria-labelledby="warningIcon"
+                  aria-labelledby={warningIconId}
                 >
-                  <title id="warningIcon">Warning Icon</title>
+                  <title id={warningIconId}>Warning Icon</title>
                   <circle cx="12" cy="12" r="10" />
                   <line x1="12" y1="8" x2="12" y2="12" />
                   <line x1="12" y1="16" x2="12.01" y2="16" />

@@ -3,7 +3,9 @@
 // Runtime types generated with workerd@1.20250803.0 2025-05-07 nodejs_compat,nodejs_compat_populate_process_env
 declare namespace Cloudflare {
 	interface Env {
+		APP_URL: string;
 		OPENAI_API_KEY: string;
+		ANTHROPIC_API_KEY: string;
 		Chat: DurableObjectNamespace<import("./src/server").Chat>;
 		AI: Ai;
 	}
@@ -13,7 +15,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "OPENAI_API_KEY">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "APP_URL" | "OPENAI_API_KEY" | "ANTHROPIC_API_KEY">> {}
 }
 
 // Begin runtime types
