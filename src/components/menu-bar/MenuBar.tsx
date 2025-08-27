@@ -17,7 +17,7 @@ const MenuOption = ({
   id,
   isActive,
   onClick,
-  tooltip,
+  tooltip
 }: MenuOptionProps) => (
   <Tooltip
     content={tooltip}
@@ -30,7 +30,7 @@ const MenuOption = ({
         "text-ob-base-100 hover:text-ob-base-300 border-ob-border focus:inset-ring-focus focus-visible:border-ob-focus relative -ml-px flex h-full w-11 cursor-pointer items-center justify-center border transition-colors focus:z-10 focus:outline-none focus-visible:z-10 focus-visible:inset-ring-[0.5]",
         {
           "text-ob-base-300 bg-ob-base-200 focus-visible:border-ob-focus":
-            isActive === id,
+            isActive === id
         }
       )}
       onClick={onClick}
@@ -51,7 +51,7 @@ export const MenuBar = ({
   className,
   isActive,
   options,
-  optionIds = false, // if option needs an extra unique ID
+  optionIds = false // if option needs an extra unique ID
 }: MenuBarProps) => {
   const menuRef = useRef<HTMLElement | null>(null);
 

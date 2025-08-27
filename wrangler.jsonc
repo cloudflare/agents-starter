@@ -1,26 +1,27 @@
 {
+  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "my-chat-agent",
   "main": "src/server.ts",
-  "compatibility_date": "2025-05-07",
-  "compatibility_flags": [
-    "nodejs_compat",
-    "nodejs_compat_populate_process_env",
-  ],
+  "compatibility_date": "2025-08-03",
+  "compatibility_flags": ["nodejs_compat"],
+  "ai": {
+    "binding": "AI"
+  },
   "assets": {
-    "directory": "public",
+    "directory": "public"
   },
   "durable_objects": {
     "bindings": [
       {
         "name": "Chat",
-        "class_name": "Chat",
-      },
-    ],
+        "class_name": "Chat"
+      }
+    ]
   },
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["Chat"],
-    },
-  ],
+      "new_sqlite_classes": ["Chat"]
+    }
+  ]
 }

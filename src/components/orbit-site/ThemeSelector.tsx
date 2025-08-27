@@ -21,13 +21,13 @@ const ThemeSelector = () => {
       <Moon
         weight="bold"
         className={cn("hidden", {
-          "animate-fade block": theme === "dark",
+          "animate-fade block": theme === "dark"
         })}
       />
       <Sun
         weight="bold"
         className={cn("animate-fade block", {
-          hidden: theme === "dark",
+          hidden: theme === "dark"
         })}
       />
     </button>

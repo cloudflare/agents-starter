@@ -72,14 +72,14 @@ npm run deploy
 
 Add new tools in `tools.ts` using the tool builder:
 
-```typescript
+```ts
 // Example of a tool that requires confirmation
 const searchDatabase = tool({
   description: "Search the database for user records",
   parameters: z.object({
     query: z.string(),
-    limit: z.number().optional(),
-  }),
+    limit: z.number().optional()
+  })
   // No execute function = requires confirmation
 });
 
@@ -87,7 +87,7 @@ const searchDatabase = tool({
 const getCurrentTime = tool({
   description: "Get current server time",
   parameters: z.object({}),
-  execute: async () => new Date().toISOString(),
+  execute: async () => new Date().toISOString()
 });
 
 // Scheduling tool implementation
@@ -97,11 +97,11 @@ const scheduleTask = tool({
   parameters: z.object({
     type: z.enum(["scheduled", "delayed", "cron"]),
     when: z.union([z.number(), z.string()]),
-    payload: z.string(),
+    payload: z.string()
   }),
   execute: async ({ type, when, payload }) => {
     // ... see the implementation in tools.ts
-  },
+  }
 });
 ```
 
@@ -111,7 +111,7 @@ To handle tool confirmations, add execution functions to the `executions` object
 export const executions = {
   searchDatabase: async ({
     query,
-    limit,
+    limit
   }: {
     query: string;
     limit?: number;
@@ -119,7 +119,7 @@ export const executions = {
     // Implementation for when the tool is confirmed
     const results = await db.search(query, limit);
     return results;
-  },
+  }
   // Add more execution handlers for other tools that require confirmation
 };
 ```
@@ -127,7 +127,7 @@ export const executions = {
 Tools can be configured in two ways:
 
 1. With an `execute` function for automatic execution
-2. Without an `execute` function, requiring confirmation and using the `executions` object to handle the confirmed action
+2. Without an `execute` function, requiring confirmation and using the `executions` object to handle the confirmed action. NOTE: The keys in `executions` should match `toolsRequiringConfirmation` in `app.tsx`.
 
 ### Use a different AI model provider
 
@@ -184,7 +184,6 @@ The chat interface is built with React and can be customized in `app.tsx`:
 ### Example Use Cases
 
 1. **Customer Support Agent**
-
    - Add tools for:
      - Ticket creation/lookup
      - Order status checking
@@ -192,7 +191,6 @@ The chat interface is built with React and can be customized in `app.tsx`:
      - FAQ database search
 
 2. **Development Assistant**
-
    - Integrate tools for:
      - Code linting
      - Git operations
@@ -200,7 +198,6 @@ The chat interface is built with React and can be customized in `app.tsx`:
      - Dependency checking
 
 3. **Data Analysis Assistant**
-
    - Build tools for:
      - Database querying
      - Data visualization
@@ -208,7 +205,6 @@ The chat interface is built with React and can be customized in `app.tsx`:
      - Report generation
 
 4. **Personal Productivity Assistant**
-
    - Implement tools for:
      - Task scheduling with flexible timing options
      - One-time, delayed, and recurring task management

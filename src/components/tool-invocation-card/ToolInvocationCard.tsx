@@ -27,7 +27,7 @@ export function ToolInvocationCard({
   toolInvocation,
   toolCallId,
   needsConfirmation,
-  addToolResult,
+  addToolResult
 }: ToolInvocationCardProps) {
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -83,7 +83,7 @@ export function ToolInvocationCard({
                 onClick={() =>
                   addToolResult({
                     toolCallId,
-                    result: APPROVAL.NO,
+                    result: APPROVAL.NO
                   })
                 }
               >
@@ -96,7 +96,7 @@ export function ToolInvocationCard({
                   onClick={() =>
                     addToolResult({
                       toolCallId,
-                      result: APPROVAL.YES,
+                      result: APPROVAL.YES
                     })
                   }
                 >

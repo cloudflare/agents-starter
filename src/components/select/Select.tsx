@@ -20,7 +20,7 @@ export const Select = ({
   placeholder,
   setValue,
   size = "base",
-  value,
+  value
 }: SelectProps) => {
   const [isPointer, setIsPointer] = useState(false); // if user is using a pointer device
 
@@ -38,7 +38,7 @@ export const Select = ({
           "add-size-sm !pr-6.5": size === "sm",
           "add-size-md !pr-8": size === "md",
           "add-size-base !pr-9": size === "base",
-          "add-focus": isPointer === false,
+          "add-focus": isPointer === false
         },
         className
       )}
@@ -46,7 +46,7 @@ export const Select = ({
         backgroundImage: "url(/assets/caret.svg)",
         backgroundPosition: `calc(100% - ${size === "base" ? "10px" : size === "md" ? "8px" : "6px"}) calc(100% / 2)`,
         backgroundSize:
-          size === "base" ? "16px" : size === "md" ? "14px" : "12px",
+          size === "base" ? "16px" : size === "md" ? "14px" : "12px"
       }}
       onChange={(e) => {
         setValue(e.target.value);

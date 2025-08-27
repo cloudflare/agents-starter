@@ -15,7 +15,7 @@ export const Card = ({
   className,
   ref,
   tabIndex,
-  variant = "secondary",
+  variant = "secondary"
 }: CardProps) => {
   const Component = as ?? "div";
   return (
@@ -24,7 +24,7 @@ export const Card = ({
         "w-full rounded-lg p-4",
         {
           "btn-primary": variant === "primary",
-          "btn-secondary": variant === "secondary",
+          "btn-secondary": variant === "secondary"
         },
         className
       )}

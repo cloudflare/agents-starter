@@ -7,7 +7,7 @@ type UseMenuNavigationProps = {
 
 export const useMenuNavigation = ({
   menuRef,
-  direction = "horizontal",
+  direction = "horizontal"
 }: UseMenuNavigationProps) => {
   const activeElementRef = useRef<HTMLElement | null>(null);
 

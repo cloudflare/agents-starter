@@ -16,7 +16,7 @@ import { unstable_scheduleSchema } from "agents/schedule";
  */
 const getWeatherInformation = tool({
   description: "show the weather in a given city to the user",
-  parameters: z.object({ city: z.string() }),
+  parameters: z.object({ city: z.string() })
   // Omitting execute function makes this tool require human confirmation
 });
 
@@ -31,7 +31,7 @@ const getLocalTime = tool({
   execute: async ({ location }) => {
     console.log(`Getting local time for ${location}`);
     return "10am";
-  },
+  }
 });
 
 const scheduleTask = tool({
@@ -62,7 +62,7 @@ const scheduleTask = tool({
       return `Error scheduling task: ${error}`;
     }
     return `Task scheduled for type "${when.type}" : ${input}`;
-  },
+  }
 });
 
 /**
@@ -85,7 +85,7 @@ const getScheduledTasks = tool({
       console.error("Error listing scheduled tasks", error);
       return `Error listing scheduled tasks: ${error}`;
     }
-  },
+  }
 });
 
 /**
@@ -95,7 +95,7 @@ const getScheduledTasks = tool({
 const cancelScheduledTask = tool({
   description: "Cancel a scheduled task using its ID",
   parameters: z.object({
-    taskId: z.string().describe("The ID of the task to cancel"),
+    taskId: z.string().describe("The ID of the task to cancel")
   }),
   execute: async ({ taskId }) => {
     const { agent } = getCurrentAgent<Chat>();
@@ -106,7 +106,7 @@ const cancelScheduledTask = tool({
       console.error("Error canceling scheduled task", error);
       return `Error canceling task ${taskId}: ${error}`;
     }
-  },
+  }
 });
 
 /**
@@ -118,17 +118,18 @@ export const tools = {
   getLocalTime,
   scheduleTask,
   getScheduledTasks,
-  cancelScheduledTask,
+  cancelScheduledTask
 };
 
 /**
  * Implementation of confirmation-required tools
  * This object contains the actual logic for tools that need human approval
  * Each function here corresponds to a tool above that doesn't have an execute function
+ * NOTE: keys below should match toolsRequiringConfirmation in app.tsx
  */
 export const executions = {
   getWeatherInformation: async ({ city }: { city: string }) => {
     console.log(`Getting weather information for ${city}`);
     return `The weather in ${city} is sunny`;
-  },
+  }
 };

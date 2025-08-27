@@ -8,7 +8,7 @@ import {
   generateId,
   streamText,
   type StreamTextOnFinishCallback,
-  type ToolSet,
+  type ToolSet
 } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { processToolCalls } from "./utils";
@@ -32,12 +32,12 @@ export class Chat extends AIChatAgent<Env> {
    */
   async onChatMessage(
     onFinish: StreamTextOnFinishCallback<ToolSet>,
-    options?: { abortSignal?: AbortSignal }
+    _options?: { abortSignal?: AbortSignal }
   ) {
     // Collect all tools, including MCP tools
     const allTools = {
       ...tools,
-      ...this.mcp.unstable_getAITools(),
+      ...this.mcp.unstable_getAITools()
     };
 
     // Create a streaming response that handles both text and tool outputs
@@ -49,7 +49,7 @@ export class Chat extends AIChatAgent<Env> {
           messages: this.messages,
           dataStream,
           tools: allTools,
-          executions,
+          executions
         });
 
         // Stream the AI response using GPT-4
@@ -71,25 +71,25 @@ If the user asks to schedule a task, use the schedule tool to schedule the task.
           onError: (error) => {
             console.error("Error while streaming:", error);
           },
-          maxSteps: 10,
+          maxSteps: 10
         });
 
         // Merge the AI response stream with tool execution outputs
         result.mergeIntoDataStream(dataStream);
-      },
+      }
     });
 
     return dataStreamResponse;
   }
-  async executeTask(description: string, task: Schedule<string>) {
+  async executeTask(description: string, _task: Schedule<string>) {
     await this.saveMessages([
       ...this.messages,
       {
         id: generateId(),
         role: "user",
         content: `Running scheduled task: ${description}`,
-        createdAt: new Date(),
-      },
+        createdAt: new Date()
+      }
     ]);
   }
 
@@ -150,13 +150,13 @@ If the user asks to schedule a task, use the schedule tool to schedule the task.
  * Worker entry point that routes incoming requests to the appropriate handler
  */
 export default {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext) {
+  async fetch(request: Request, env: Env, _ctx: ExecutionContext) {
     const url = new URL(request.url);
 
     if (url.pathname === "/check-open-ai-key") {
       const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
       return Response.json({
-        success: hasOpenAIKey,
+        success: hasOpenAIKey
       });
     }
     if (!process.env.OPENAI_API_KEY) {
@@ -169,5 +169,5 @@ export default {
       (await routeAgentRequest(request, env)) ||
       new Response("Not found", { status: 404 })
     );
-  },
+  }
 } satisfies ExportedHandler<Env>;

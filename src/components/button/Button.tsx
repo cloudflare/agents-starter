@@ -59,7 +59,7 @@ const ButtonComponent = ({
 
           "add-disable": disabled,
 
-          toggle: toggled,
+          toggle: toggled
         },
         className
       )}
@@ -78,7 +78,7 @@ const ButtonComponent = ({
             "w-3.5": size === "md",
             "w-4": size === "base",
             "ease-bounce transition-[width] duration-300 starting:w-0":
-              !children,
+              !children
           })}
         >
           <Loader size={size === "sm" ? 12 : size === "md" ? 14 : 16} />

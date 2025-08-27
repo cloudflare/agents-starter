@@ -7,7 +7,7 @@ type LoaderProps = {
 export const Loader = ({
   className,
   size = 24,
-  title = "Loading...",
+  title = "Loading..."
 }: LoaderProps) => (
   <svg
     width="24"

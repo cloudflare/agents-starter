@@ -17,7 +17,7 @@ export const Toggle = ({ onClick, size = "base", toggled }: ToggleProps) => {
           "h-6.5 w-10.5": size === "base",
           "h-7.5 w-12.5": size === "lg",
           "dark:hover:bg-neutral-450 bg-neutral-900 hover:bg-neutral-700 dark:bg-neutral-500":
-            toggled,
+            toggled
         }
       )}
       onClick={onClick}
@@ -26,7 +26,7 @@ export const Toggle = ({ onClick, size = "base", toggled }: ToggleProps) => {
         className={cn(
           "aspect-square h-full rounded-full bg-white transition-all",
           {
-            "translate-x-full": toggled,
+            "translate-x-full": toggled
           }
         )}
       />

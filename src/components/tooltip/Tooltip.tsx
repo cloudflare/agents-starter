@@ -56,6 +56,7 @@ export const Tooltip = ({ children, className, content, id }: TooltipProps) => {
   }, [isVisible]);
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: it's fine, but todo fix
     <div
       aria-describedby={isVisible ? tooltipId : undefined}
       className={cn("relative inline-block", className)}
@@ -92,7 +93,7 @@ export const Tooltip = ({ children, className, content, id }: TooltipProps) => {
               "right-0 translate-x-0": positionX === "right",
               "left-1/2 -translate-x-1/2": positionX === "center",
               "-bottom-7": positionY === "bottom",
-              "-top-7": positionY === "top",
+              "-top-7": positionY === "top"
             }
           )}
           id={tooltipId}

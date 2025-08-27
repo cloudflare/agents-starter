@@ -9,7 +9,7 @@ type TooltipContextType = {
 const TooltipContext = createContext<TooltipContextType | null>(null);
 
 export const TooltipProvider = ({
-  children,
+  children
 }: {
   children: React.ReactNode;
 }) => {
