@@ -25,8 +25,7 @@ import {
   X,
   Paperclip,
   PaperPlaneTilt,
-  Stop
-  PaperPlaneRight,
+  Stop,
 } from "@phosphor-icons/react";
 import { getFileExtension } from "./utils";
 
@@ -412,22 +411,7 @@ export default function Chat() {
                                     )}
                                   />
                                 </Card>
-                                {(m.parts?.some(
-                                  (p) => p.type === "text" && p.text.trim()
-                                ) ||
-                                  (typeof m.content === "string" &&
-                                    m.content.trim())) && (
-                                  <p
-                                    className={`text-xs text-muted-foreground mt-1 ${
-                                      isUser ? "text-right" : "text-left"
-                                    }`}
-                                  >
-                                    {formatTime(
-                                      new Date(m.createdAt as unknown as string)
-                                    )}
-                                  </p>
-                                )}
-                                                                <p
+                                <p
                                   className={`text-xs text-muted-foreground mt-1 ${
                                     isUser ? "text-right" : "text-left"
                                   }`}
@@ -532,7 +516,7 @@ export default function Chat() {
             });
             setTextareaHeight("auto"); // Reset height after submission
           }}
-          className="p-3 bg-neutral-100 dark:bg-neutral-950 absolute bottom-0 left-0 right-0 z-10 border-t border-neutral-300 dark:border-neutral-800"
+          className="p-3 bg-neutral-50 absolute bottom-0 left-0 right-0 z-10 border-t border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900"
         >
           {attachedFiles.length > 0 && (
             <div className="flex space-x-2 mb-2 pb-2 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent bg-input-background">
@@ -636,7 +620,7 @@ export default function Chat() {
                   <button
                     type="submit"
                     className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
-                    disabled={pendingToolCallConfirmation || !agentInput.trim()}
+                    disabled={pendingToolCallConfirmation || (!agentInput.trim() && attachedFiles.length === 0) || isUploading}
                     aria-label="Send message"
                   >
                     <PaperPlaneTilt size={16} />
@@ -644,42 +628,6 @@ export default function Chat() {
                 )}
               </div>
             </div>
-
-            <Button
-              type="submit"
-              shape="square"
-              className="rounded-full h-10 w-10 flex-shrink-0"
-              disabled={
-                pendingToolCallConfirmation ||
-                isUploading ||
-                (!agentInput.trim() && attachedFiles.length === 0)
-              }
-            >
-              {isUploading ? (
-                <svg
-                  className="animate-spin h-4 w-4 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-              ) : (
-                <PaperPlaneRight size={16} />
-              )}
-            </Button>
           </div>
         </form>
       </div>
