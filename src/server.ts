@@ -137,7 +137,9 @@ export default {
 
             const reqUrl = new URL(request.url);
             const baseUrl = `${reqUrl.protocol}//${reqUrl.host}`;
+            // const baseUrl = `${reqUrl.protocol}//${reqUrl.host}`;
             // During development, use ngrok or other services to get a public URL for the file
+            // and add it to the server.allowedHosts in vite.config.ts
             // eg. baseUrl = https://123.ngrok-free.app
             const fileRetrievalUrl = `${baseUrl}/${fileKey}`;
 

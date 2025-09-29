@@ -25,7 +25,7 @@ import {
   X,
   Paperclip,
   PaperPlaneTilt,
-  Stop,
+  Stop
 } from "@phosphor-icons/react";
 import { getFileExtension } from "./utils";
 
@@ -92,28 +92,6 @@ export default function Chat() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setAgentInput(e.target.value);
-  };
-
-  const handleAgentSubmit = async (
-    e: React.FormEvent,
-    extraData: Record<string, unknown> = {}
-  ) => {
-    e.preventDefault();
-    if (!agentInput.trim()) return;
-
-    const message = agentInput;
-    setAgentInput("");
-
-    // Send message to agent
-    await sendMessage(
-      {
-        role: "user",
-        parts: [{ type: "text", text: message }]
-      },
-      {
-        body: extraData
-      }
-    );
   };
 
   const {
@@ -323,68 +301,49 @@ export default function Chat() {
 
                     <div>
                       <div>
+                        {m.parts
+                          ?.filter((part) => part.type === "file")
+                          .map((part, i) => (
+                            <div
+                              key={`file-${i}`}
+                              className={`mb-2 space-y-2 ${isUser ? "pl-10" : "pr-10"}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                {part.mediaType?.startsWith("image/") ? (
+                                  <a
+                                    href={part.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block max-w-[200px] max-h-[200px] rounded border border-neutral-300 dark:border-neutral-700 overflow-hidden shadow-sm"
+                                  >
+                                    <img
+                                      src={part.url}
+                                      alt="Uploaded image"
+                                      className="w-full h-full object-cover"
+                                      loading="lazy"
+                                    />
+                                  </a>
+                                ) : (
+                                  <a
+                                    href={part.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 p-2 rounded border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors text-sm"
+                                  >
+                                    <Paperclip size={16} />
+                                    <span className="truncate max-w-[150px]">
+                                      File
+                                    </span>
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+
                         {m.parts?.map((part, i) => {
                           if (part.type === "text") {
                             return (
                               <div key={`text-${i}`}>
-                                {m.experimental_attachments &&
-                                  m.experimental_attachments.length > 0 && (
-                                    <div
-                                      className={`mb-2 space-y-2 ${isUser ? "pl-10" : "pr-10"}`}
-                                    >
-                                      {m.experimental_attachments.map(
-                                        (file) => {
-                                          return (
-                                            <div
-                                              key={file.url + file.name}
-                                              className="flex items-center gap-2"
-                                            >
-                                              {file.contentType?.startsWith(
-                                                "image/"
-                                              ) ? (
-                                                <a
-                                                  href={file.url}
-                                                  target="_blank"
-                                                  rel="noopener noreferrer"
-                                                  className="block max-w-[200px] max-h-[200px] rounded border border-neutral-300 dark:border-neutral-700 overflow-hidden shadow-sm"
-                                                >
-                                                  <img
-                                                    src={file.url}
-                                                    alt={file.name}
-                                                    className="w-full h-full object-cover"
-                                                    loading="lazy"
-                                                  />
-                                                </a>
-                                              ) : (
-                                                <a
-                                                  href={file.url}
-                                                  target="_blank"
-                                                  rel="noopener noreferrer"
-                                                  download={file.name}
-                                                  className="inline-flex items-center gap-2 p-2 rounded border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors text-sm"
-                                                >
-                                                  <Paperclip size={16} />
-                                                  <span
-                                                    className="truncate max-w-[150px]"
-                                                    title={file.name}
-                                                  >
-                                                    {file.name}
-                                                  </span>
-                                                  <span className="text-xs text-muted-foreground ml-1">
-                                                    (
-                                                    {getFileExtension(
-                                                      file.name ?? ""
-                                                    )}
-                                                    )
-                                                  </span>
-                                                </a>
-                                              )}
-                                            </div>
-                                          );
-                                        }
-                                      )}
-                                    </div>
-                                  )}
                                 <Card
                                   className={`p-3 rounded-md bg-neutral-100 dark:bg-neutral-900 ${
                                     isUser
@@ -508,12 +467,41 @@ export default function Chat() {
               }
             }
 
-            handleAgentSubmit(e, {
-              annotations: {
-                hello: "world"
-              },
-              experimental_attachments: uploadedAttachments,
+            const messageParts: Array<
+              | { type: "text"; text: string }
+              | { type: "file"; url: string; mediaType: string; name?: string }
+            > = [];
+
+            // Add text part if there's input
+            if (agentInput.trim()) {
+              messageParts.push({ type: "text", text: agentInput });
+            }
+
+            // Add file parts if there are uploaded attachments
+            uploadedAttachments.forEach((attachment) => {
+              messageParts.push({
+                type: "file",
+                url: attachment.url,
+                mediaType: attachment.contentType || "application/octet-stream",
+                name: attachment.name
+              });
             });
+
+            setAgentInput("");
+
+            await sendMessage(
+              {
+                role: "user",
+                parts: messageParts
+              },
+              {
+                body: {
+                  annotations: {
+                    hello: "world"
+                  }
+                }
+              }
+            );
             setTextareaHeight("auto"); // Reset height after submission
           }}
           className="p-3 bg-neutral-50 absolute bottom-0 left-0 right-0 z-10 border-t border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900"
@@ -620,7 +608,11 @@ export default function Chat() {
                   <button
                     type="submit"
                     className="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-1.5 h-fit border border-neutral-200 dark:border-neutral-800"
-                    disabled={pendingToolCallConfirmation || (!agentInput.trim() && attachedFiles.length === 0) || isUploading}
+                    disabled={
+                      pendingToolCallConfirmation ||
+                      (!agentInput.trim() && attachedFiles.length === 0) ||
+                      isUploading
+                    }
                     aria-label="Send message"
                   >
                     <PaperPlaneTilt size={16} />
