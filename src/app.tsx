@@ -511,7 +511,7 @@ export default function Chat() {
             handleAgentSubmit(e, {
               annotations: {
                 hello: "world"
-              }
+              },
               experimental_attachments: uploadedAttachments,
             });
             setTextareaHeight("auto"); // Reset height after submission
