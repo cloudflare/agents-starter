@@ -295,7 +295,10 @@ export default function Chat() {
                             );
                           }
 
-                          if (isToolUIPart(part)) {
+                          if (
+                            isToolUIPart(part) &&
+                            m.id.startsWith("assistant")
+                          ) {
                             const toolCallId = part.toolCallId;
                             const toolName = part.type.replace("tool-", "");
                             const needsConfirmation =
