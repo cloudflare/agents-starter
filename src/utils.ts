@@ -54,32 +54,42 @@ export async function processToolCalls<Tools extends ToolSet>({
             ""
           ) as keyof typeof executions;
 
-          // Only process tools that require confirmation (are in executions object) and are in 'input-available' state
-          if (!(toolName in executions) || part.state !== "input-available")
+          if (!(toolName in executions)) return part;
+
+          const approvalValue =
+            (typeof part.output === "string" && part.output) ||
+            (typeof part.input === "string" && part.input);
+
+          if (approvalValue !== APPROVAL.YES && approvalValue !== APPROVAL.NO)
             return part;
 
           let result: unknown;
 
-          if (part.input === APPROVAL.YES) {
-            // User approved the tool execution
+          if (approvalValue === APPROVAL.YES) {
             if (!isValidToolName(toolName, executions)) {
               return part;
             }
 
             const toolInstance = executions[toolName];
             if (toolInstance) {
-              result = await toolInstance(part.input, {
-                messages: convertToModelMessages(messages),
-                toolCallId: part.toolCallId
-              });
+              const toolArguments = part.input;
+
+              if (toolArguments === undefined || typeof toolArguments === "string") {
+                console.error(
+                  `Missing tool arguments for ${String(toolName)} after approval`
+                );
+                result = "Error: Missing tool arguments for execution";
+              } else {
+                result = await toolInstance(toolArguments, {
+                  messages: convertToModelMessages(messages),
+                  toolCallId: part.toolCallId
+                });
+              }
             } else {
               result = "Error: No execute function found on tool";
             }
-          } else if (part.input === APPROVAL.NO) {
-            result = "Error: User denied access to tool execution";
           } else {
-            // If no approval input yet, leave the part as-is for user interaction
-            return part;
+            result = "Error: User denied access to tool execution";
           }
 
           // Forward updated tool result to the client.
