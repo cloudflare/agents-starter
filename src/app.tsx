@@ -303,6 +303,8 @@ export default function Chat() {
                                 toolName as keyof typeof tools
                               );
 
+                            if (!needsConfirmation) return null;
+
                             // Skip rendering the card in debug mode
                             if (showDebug) return null;
 
