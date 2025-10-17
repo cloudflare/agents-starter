@@ -304,6 +304,7 @@ export default function Chat() {
                               );
 
                             if (!needsConfirmation) return null;
+                            if (part.state !== "input-available") return null;
 
                             // Skip rendering the card in debug mode
                             if (showDebug) return null;
