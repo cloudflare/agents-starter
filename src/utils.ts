@@ -120,3 +120,9 @@ export function cleanupMessages(messages: UIMessage[]): UIMessage[] {
     return !hasIncompleteToolCall;
   });
 }
+
+export const getFileExtension = (fileName: string): string => {
+  return fileName
+    .slice(((fileName.lastIndexOf(".") - 1) >>> 0) + 2)
+    .toUpperCase();
+};
