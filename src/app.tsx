@@ -295,16 +295,16 @@ export default function Chat() {
                             );
                           }
 
-                          if (
-                            isToolUIPart(part) &&
-                            m.id.startsWith("assistant")
-                          ) {
+                          if (isToolUIPart(part)) {
                             const toolCallId = part.toolCallId;
                             const toolName = part.type.replace("tool-", "");
                             const needsConfirmation =
                               toolsRequiringConfirmation.includes(
                                 toolName as keyof typeof tools
                               );
+
+                            if (!needsConfirmation) return null;
+                            if (part.state !== "input-available") return null;
 
                             // Skip rendering the card in debug mode
                             if (showDebug) return null;
