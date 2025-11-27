@@ -31,7 +31,7 @@ const AvatarComponent = ({
     <Slot
       as={as ?? "div"}
       className={cn(
-        "btn btn-secondary circular add-focus relative overflow-hidden",
+        "btn btn-secondary circular add-focus relative overflow-hidden shrink-0",
         {
           "add-size-sm": size === "sm",
           "add-size-md": size === "md",
