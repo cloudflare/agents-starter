@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ToolUIPart } from "ai";
-import { Robot, CaretDown } from "@phosphor-icons/react";
+import { RobotIcon, CaretDownIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/button/Button";
 import { Card } from "@/components/card/Card";
 import { APPROVAL } from "@/shared";
@@ -53,7 +53,7 @@ export function ToolInvocationCard({
         <div
           className={`${needsConfirmation ? "bg-[#F48120]/10" : "bg-[#F48120]/5"} p-1.5 rounded-full flex-shrink-0`}
         >
-          <Robot size={16} className="text-[#F48120]" />
+          <RobotIcon size={16} className="text-[#F48120]" />
         </div>
         <h4 className="font-medium flex items-center gap-2 flex-1 text-left">
           {toolUIPart.type}
@@ -61,7 +61,7 @@ export function ToolInvocationCard({
             <span className="text-xs text-[#F48120]/70">✓ Completed</span>
           )}
         </h4>
-        <CaretDown
+        <CaretDownIcon
           size={16}
           className={`text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`}
         />

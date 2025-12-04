@@ -1,11 +1,11 @@
 import { Button } from "@/components/button/Button";
 import type { ButtonProps } from "@/components/button/Button";
 import { cn } from "@/lib/utils";
-import { ArrowsClockwise } from "@phosphor-icons/react";
+import { ArrowsClockwiseIcon } from "@phosphor-icons/react";
 
 export const RefreshButton = ({ ...props }: ButtonProps) => (
   <Button shape="square" toggled={props.toggled} {...props}>
-    <ArrowsClockwise
+    <ArrowsClockwiseIcon
       className={cn({
         "animate-refresh": props.toggled,
         "size-4.5": props.size === "base",

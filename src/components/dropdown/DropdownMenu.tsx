@@ -1,5 +1,5 @@
 /** biome-ignore-all lint/a11y/noStaticElementInteractions: todo */
-import { DotsThree, IconContext } from "@phosphor-icons/react";
+import { DotsThreeIcon, IconContext } from "@phosphor-icons/react";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 
 import { cn } from "@/lib/utils";
@@ -96,7 +96,7 @@ const DropdownMenu = ({
       )}
       disabled={disabled}
     >
-      {children ?? <DotsThree weight="bold" />}
+      {children ?? <DotsThreeIcon weight="bold" />}
     </DropdownMenuPrimitive.Trigger>
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
