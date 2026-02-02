@@ -40,6 +40,9 @@ export class Chat extends AIChatAgent<Env> {
     //   "https://path-to-mcp-server/sse"
     // );
 
+    // Ensure MCP's jsonSchema is loaded before getAITools() (avoids "jsonSchema not initialized" on first request)
+    await this.mcp.ensureJsonSchema();
+
     // Collect all tools, including MCP tools
     const allTools = {
       ...tools,
