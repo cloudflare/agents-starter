@@ -10,3 +10,20 @@ body,
   height: 100%;
   margin: 0;
 }
+
+.sd-invert [data-streamdown="inline-code"] {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: inherit;
+}
+
+.sd-invert [data-streamdown="link"],
+.sd-invert [data-streamdown="link"] button {
+  color: inherit;
+  opacity: 0.9;
+}
+
+.sd-invert [data-streamdown="blockquote"] {
+  color: inherit;
+  opacity: 0.8;
+  border-color: currentColor;
+}

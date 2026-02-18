@@ -4,9 +4,9 @@
 
 <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/agents-starter"><img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare"/></a>
 
-A starter template for building AI chat agents on Cloudflare, powered by the [Agents SDK](https://developers.cloudflare.com/agents/).
+A starter template for building multimodal AI chat agents on Cloudflare, powered by the [Agents SDK](https://developers.cloudflare.com/agents/).
 
-Uses Workers AI (no API key required), with tools for weather, timezone detection, calculations with approval, and task scheduling.
+Uses Workers AI (no API key required), with image analysis, voice transcription, tools, and task scheduling — all running on Cloudflare's global network.
 
 ## Quick start
 
@@ -19,19 +19,24 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173) to see your agent in action.
 
-Try these prompts to see the different features:
+Try these prompts and interactions:
 
 - **"What's the weather in Paris?"** — server-side tool (runs automatically)
 - **"What timezone am I in?"** — client-side tool (browser provides the answer)
 - **"Calculate 5000 \* 3"** — approval tool (asks you before running)
 - **"Remind me in 5 minutes to take a break"** — scheduling
+- **Drop an image** into the chat and ask "What is this?" — image analysis via vision model
+- **Click the mic button** and ask a question — voice input via Whisper transcription
 
 ## Project structure
 
 ```
 src/
-  server.ts    # Chat agent with tools and scheduling
-  app.tsx      # Chat UI built with Kumo components
+  server.ts    # Chat agent, model setup, and file routes (onRequest)
+  tools.ts     # Tool definitions (server-side, client-side, approval)
+  vision.ts    # Image → text description via vision model + R2 cache
+  audio.ts     # Audio → text transcript via Whisper + R2 cache
+  app.tsx      # Chat UI with multimodal input (Kumo components)
   client.tsx   # React entry point
   styles.css   # Tailwind + Kumo styles
 ```
@@ -39,18 +44,33 @@ src/
 ## What's included
 
 - **AI Chat** — Streaming responses powered by Workers AI via `AIChatAgent`
+- **Multimodal input** — Attach images (file picker, drag-and-drop, clipboard paste) and record voice messages
+- **Image analysis** — A separate vision model describes uploaded images; descriptions are cached in R2 metadata
+- **Voice transcription** — Whisper transcribes audio recordings; transcripts are cached in R2 metadata
 - **Three tool patterns** — server-side auto-execute, client-side (browser), and human-in-the-loop approval
 - **Scheduling** — one-time, delayed, and recurring (cron) tasks
+- **R2 file storage** — Uploaded files are stored in R2, not embedded as base64 in messages
+- **Markdown rendering** — Both user and assistant messages render markdown via Streamdown
 - **Reasoning display** — shows model thinking as it streams, collapses when done
-- **Debug mode** — toggle in the header to inspect raw message JSON for each message
+- **Debug mode** — toggle in the header to inspect raw message JSON
 - **Kumo UI** — Cloudflare's design system with dark/light mode
 - **Real-time** — WebSocket connection with automatic reconnection and message persistence
 
+## How the multimodal pipeline works
+
+When a user sends an image or voice recording:
+
+1. **Client** uploads the file to R2 via the agent's `onRequest` handler
+2. **Message** is sent with a lightweight `/files/` URL (not a multi-MB base64 string)
+3. **Server** pre-processes the message before the chat model sees it:
+   - **Images** → Llama 3.2 Vision describes the image, result cached in R2 metadata
+   - **Audio** → Whisper transcribes the recording, result cached in R2 metadata
+4. **Chat model** receives text descriptions like `[Attached image: ...]` and `[Voice message: ...]`
+5. **Client** displays the media inline with a collapsible AI description underneath
+
+On subsequent turns, cached descriptions are reused — no redundant model calls.
+
 ## Making it your own
-
-### Name your project
-
-Update the name in `package.json` and `wrangler.jsonc` — the `name` in `wrangler.jsonc` becomes your deployed Worker's URL (`<name>.<subdomain>.workers.dev`).
 
 ### Change the system prompt
 
@@ -58,10 +78,10 @@ Edit the `system` string in `server.ts` to give your agent a different personali
 
 ### Replace the demo tools with real ones
 
-The starter ships with demo tools (`getWeather` returns random data, `calculate` does basic arithmetic). Replace them with real implementations:
+The starter ships with demo tools (`getWeather` returns random data, `calculate` does basic arithmetic). Replace them with real implementations in `tools.ts`:
 
 ```ts
-// In server.ts, replace a demo tool with a real API call:
+// In tools.ts:
 getWeather: tool({
   description: "Get the current weather for a city",
   inputSchema: z.object({ city: z.string() }),
@@ -74,7 +94,7 @@ getWeather: tool({
 
 ### Add your own tools
 
-Add new tools to the `tools` object in `server.ts`. There are three patterns:
+Add new tools to the `tools` object in `tools.ts`. There are three patterns:
 
 ```ts
 // Auto-execute: runs on the server, no user interaction
@@ -100,6 +120,8 @@ sensitiveTool: tool({
 }),
 ```
 
+Tools use `getCurrentAgent()` from the Agents SDK to access the agent instance — no need to pass it as an argument. See [getCurrentAgent()](https://developers.cloudflare.com/agents/api-reference/get-current-agent/).
+
 ### Customize scheduled task behavior
 
 When a scheduled task fires, `executeTask` runs on the server. It does its work and then uses `this.broadcast()` to notify connected clients (shown as a toast notification in the UI). Replace it with your own logic:
@@ -120,7 +142,15 @@ async executeTask(description: string, task: Schedule<string>) {
 
 ### Remove scheduling
 
-If you don't need scheduling, remove `scheduleTask`, `getScheduledTasks`, and `cancelScheduledTask` from the tools object, the `executeTask` method, and the schedule-related imports (`getSchedulePrompt`, `scheduleSchema`, `Schedule`, `generateId`).
+If you don't need scheduling, remove `scheduleTask`, `getScheduledTasks`, and `cancelScheduledTask` from `tools.ts`, the `executeTask` method in `server.ts`, and the schedule-related imports.
+
+### Adjust the upload size limit
+
+The default max upload size is 10 MB. Change `MAX_UPLOAD_BYTES` at the top of `server.ts`:
+
+```ts
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // 25 MB
+```
 
 ### Add state beyond chat messages
 
@@ -152,14 +182,13 @@ Add external tools from MCP servers:
 
 ```ts
 async onChatMessage(onFinish, options) {
-  // Connect to an MCP server
   await this.mcp.connect("https://my-mcp-server.example/sse");
 
   const result = streamText({
     // ...
     tools: {
       ...myTools,
-      ...this.mcp.getAITools() // Include MCP tools
+      ...this.mcp.getAITools()
     }
   });
 }
@@ -181,11 +210,9 @@ npm install @ai-sdk/openai
 // In server.ts, replace the model:
 import { openai } from "@ai-sdk/openai";
 
-// Inside onChatMessage:
-const result = streamText({
-  model: openai("gpt-5.2")
-  // ...
-});
+const chatModel = openai("gpt-4o");
+// Delete visionModel and the describeImageParts call —
+// GPT-4o handles images natively, no pre-processing needed.
 ```
 
 Create a `.env` file with your API key:
@@ -203,10 +230,9 @@ npm install @ai-sdk/anthropic
 ```ts
 import { anthropic } from "@ai-sdk/anthropic";
 
-const result = streamText({
-  model: anthropic("claude-sonnet-4-20250514")
-  // ...
-});
+const chatModel = anthropic("claude-sonnet-4-20250514");
+// Delete visionModel and the describeImageParts call —
+// Claude handles images natively.
 ```
 
 Create a `.env` file with your API key:
@@ -215,13 +241,23 @@ Create a `.env` file with your API key:
 ANTHROPIC_API_KEY=your-key-here
 ```
 
+> **Note:** When switching to a model that supports images natively, you can delete `vision.ts` entirely and remove the `describeImageParts` call in `server.ts`. The image file parts will be passed directly to the model. Audio transcription via `audio.ts` still applies regardless of provider.
+
 ## Deploy
+
+Before deploying, create the R2 bucket:
+
+```bash
+npx wrangler r2 bucket create agent-starter-uploads
+```
+
+Then deploy:
 
 ```bash
 npm run deploy
 ```
 
-Your agent is live on Cloudflare's global network. Messages persist in SQLite, streams resume on disconnect, and the agent hibernates when idle.
+Your agent is live on Cloudflare's global network. Messages persist in SQLite, uploaded files are stored in R2, streams resume on disconnect, and the agent hibernates when idle.
 
 ## Learn more
 
