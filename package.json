@@ -1,5 +1,5 @@
 {
-  "name": "agent-starter",
+  "name": "cf_ai_app",
   "version": "1.0.0",
   "private": true,
   "description": "Starter template for building AI chat agents on Cloudflare",
