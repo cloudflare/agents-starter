@@ -786,8 +786,14 @@ function Chat() {
                     if (isUser) {
                       return (
                         <div key={i} className="flex justify-end">
-                          <div className="max-w-[85%] px-4 py-2.5 rounded-2xl rounded-br-md bg-kumo-contrast text-kumo-inverse leading-relaxed">
-                            {text}
+                          <div className="max-w-[85%] rounded-2xl rounded-br-md bg-kumo-contrast text-kumo-inverse">
+                            <Streamdown
+                              className="sd-theme p-3 leading-relaxed"
+                              controls={false}
+                              isAnimating={false}
+                            >
+                              {text}
+                            </Streamdown>
                           </div>
                         </div>
                       );
@@ -795,7 +801,7 @@ function Chat() {
 
                     return (
                       <div key={i} className="flex justify-start">
-                        <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-kumo-base text-kumo-default leading-relaxed">
+                        <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-kumo-base text-kumo-default">
                           <Streamdown
                             className="sd-theme rounded-2xl rounded-bl-md p-3"
                             plugins={{ code }}
