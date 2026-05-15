@@ -439,7 +439,9 @@ function Chat() {
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-kumo-elevated/80 backdrop-blur-sm border-2 border-dashed border-kumo-brand rounded-xl m-2 pointer-events-none">
           <div className="flex flex-col items-center gap-2 text-kumo-brand">
             <ImageIcon size={40} />
-            <Text variant="heading3">Drop images here</Text>
+            <Text variant="heading3" as="span">
+              Drop images here
+            </Text>
           </div>
         </div>
       )}
