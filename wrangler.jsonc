@@ -13,14 +13,15 @@
   "durable_objects": {
     "bindings": [
       {
-        "class_name": "ChatAgent",
-        "name": "ChatAgent"
+        // Chat, Researcher, and Planner are reached as subagents under Inbox.
+        "class_name": "Inbox",
+        "name": "Inbox"
       }
     ]
   },
   "migrations": [
     {
-      "new_sqlite_classes": ["ChatAgent"],
+      "new_sqlite_classes": ["Inbox"],
       "tag": "v1"
     }
   ]
