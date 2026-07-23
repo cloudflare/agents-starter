@@ -95,6 +95,23 @@ function ThemeToggle() {
 
 // ── Tool rendering ────────────────────────────────────────────────────
 
+function ToolIO({ label, value }: { label: string; value: unknown }) {
+  if (value === undefined || value === null) return null;
+  const text =
+    typeof value === "string" ? value : JSON.stringify(value, null, 2);
+  if (!text) return null;
+  return (
+    <div className="mt-1">
+      <Text size="xs" variant="secondary" bold>
+        {label}
+      </Text>
+      <pre className="mt-0.5 font-mono text-xs text-kumo-subtle whitespace-pre-wrap overflow-auto max-h-64">
+        {text}
+      </pre>
+    </div>
+  );
+}
+
 function ToolPartView({
   part,
   addToolApprovalResponse
@@ -120,11 +137,8 @@ function ToolPartView({
             </Text>
             <Badge variant="secondary">Done</Badge>
           </div>
-          <div className="font-mono">
-            <Text size="xs" variant="secondary">
-              {JSON.stringify(part.output, null, 2)}
-            </Text>
-          </div>
+          <ToolIO label="Input" value={part.input} />
+          <ToolIO label="Output" value={part.output} />
         </Surface>
       </div>
     );
@@ -233,6 +247,7 @@ function ToolPartView({
               Running {toolName}...
             </Text>
           </div>
+          <ToolIO label="Input" value={part.input} />
         </Surface>
       </div>
     );
