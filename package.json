@@ -14,7 +14,7 @@
     "dev": "vite dev",
     "start": "vite dev",
     "deploy": "vite build && wrangler deploy",
-    "types": "wrangler types env.d.ts --include-runtime false",
+    "types": "wrangler types env.d.ts",
     "format": "oxfmt --write .",
     "lint": "oxlint src/",
     "check": "oxfmt --check . && oxlint src/ && tsc"
@@ -35,7 +35,6 @@
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^8.0.2",
     "@cloudflare/vite-plugin": "^1.46.0",
-    "@cloudflare/workers-types": "^5.20260722.1",
     "@rolldown/plugin-babel": "^0.2.3",
     "@tailwindcss/vite": "^4.3.1",
     "@types/node": "^26.0.1",
