@@ -59,10 +59,11 @@ export class ChatAgent extends AIChatAgent<Env> {
 ${getSchedulePrompt({ date: new Date() })}
 
 If the user asks to schedule a task, use the schedule tool to schedule the task.`,
-      // Prune old tool calls to save tokens on long conversations
+      // Prune old tool calls and reasoning to save tokens on long conversations
       messages: pruneMessages({
         messages: await convertToModelMessages(this.messages),
-        toolCalls: "before-last-2-messages"
+        toolCalls: "before-last-2-messages",
+        reasoning: "before-last-message"
       }),
       tools: {
         // MCP tools from connected servers
