@@ -9,6 +9,7 @@ import {
   Button,
   Empty,
   InputArea,
+  PoweredByCloudflare,
   Surface,
   Switch,
   Text
@@ -953,6 +954,9 @@ function Chat() {
             )}
           </div>
         </form>
+        <div className="flex justify-center pb-3">
+          <PoweredByCloudflare href="https://developers.cloudflare.com/agents/" />
+        </div>
       </div>
     </div>
   );
