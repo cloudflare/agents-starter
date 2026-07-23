@@ -179,7 +179,7 @@ If the user asks to schedule a task, use the schedule tool to schedule the task.
           }
         })
       },
-      stopWhen: stepCountIs(5),
+      stopWhen: stepCountIs(20),
       abortSignal: options?.abortSignal
     });
 
