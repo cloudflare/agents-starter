@@ -360,13 +360,10 @@ function Chat() {
   } = useAgentChat({
     agent,
     experimental_throttle: 100,
-    onToolCall: async (event) => {
-      if (
-        "addToolOutput" in event &&
-        event.toolCall.toolName === "getUserTimezone"
-      ) {
-        event.addToolOutput({
-          toolCallId: event.toolCall.toolCallId,
+    onToolCall: async ({ toolCall, addToolOutput }) => {
+      if (toolCall.toolName === "getUserTimezone") {
+        addToolOutput({
+          toolCallId: toolCall.toolCallId,
           output: {
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             localTime: new Date().toLocaleTimeString()
