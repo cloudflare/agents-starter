@@ -14,6 +14,9 @@ import { z } from "zod";
 export class ChatAgent extends AIChatAgent<Env> {
   maxPersistedMessages = 100;
   chatRecovery = true;
+  // Wait for MCP connections to be re-established after hibernation before
+  // processing a message, so MCP tools aren't intermittently missing.
+  waitForMcpConnections = true;
 
   onStart() {
     // Configure OAuth popup behavior for MCP servers that require authentication
