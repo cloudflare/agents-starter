@@ -744,31 +744,25 @@ function Chat() {
                   </pre>
                 )}
 
-                {/* Tool parts */}
-                {message.parts.filter(isToolUIPart).map((part) => (
-                  <ToolPartView
-                    key={part.toolCallId}
-                    part={part}
-                    addToolApprovalResponse={addToolApprovalResponse}
-                  />
-                ))}
+                {/* Render parts in chronological (array) order */}
+                {message.parts.map((part, i) => {
+                  const key = `${message.id}-${i}`;
 
-                {/* Reasoning parts */}
-                {message.parts
-                  .filter(
-                    (part) =>
-                      part.type === "reasoning" &&
-                      (part as { text?: string }).text?.trim()
-                  )
-                  .map((part, i) => {
-                    const reasoning = part as {
-                      type: "reasoning";
-                      text: string;
-                      state?: "streaming" | "done";
-                    };
-                    const isDone = reasoning.state === "done" || !isStreaming;
+                  if (isToolUIPart(part)) {
                     return (
-                      <div key={i} className="flex justify-start">
+                      <ToolPartView
+                        key={key}
+                        part={part}
+                        addToolApprovalResponse={addToolApprovalResponse}
+                      />
+                    );
+                  }
+
+                  if (part.type === "reasoning") {
+                    if (!part.text.trim()) return null;
+                    const isDone = part.state === "done" || !isStreaming;
+                    return (
+                      <div key={key} className="flex justify-start">
                         <details className="max-w-[85%] w-full" open={!isDone}>
                           <summary className="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-sm select-none">
                             <BrainIcon size={14} className="text-purple-400" />
@@ -790,54 +784,46 @@ function Chat() {
                             />
                           </summary>
                           <pre className="mt-2 px-3 py-2 rounded-lg bg-kumo-control text-xs text-kumo-default whitespace-pre-wrap overflow-auto max-h-64">
-                            {reasoning.text}
+                            {part.text}
                           </pre>
                         </details>
                       </div>
                     );
-                  })}
+                  }
 
-                {/* Image parts */}
-                {message.parts
-                  .filter(
-                    (part): part is Extract<typeof part, { type: "file" }> =>
-                      part.type === "file" &&
-                      (part as { mediaType?: string }).mediaType?.startsWith(
-                        "image/"
-                      ) === true
-                  )
-                  .map((part, i) => (
-                    <div
-                      key={`file-${i}`}
-                      className={`flex ${isUser ? "justify-end" : "justify-start"}`}
-                    >
-                      <img
-                        src={part.url}
-                        alt="Attachment"
-                        className="max-h-64 rounded-xl border border-kumo-line object-contain"
-                      />
-                    </div>
-                  ))}
+                  if (
+                    part.type === "file" &&
+                    part.mediaType.startsWith("image/")
+                  ) {
+                    return (
+                      <div
+                        key={key}
+                        className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+                      >
+                        <img
+                          src={part.url}
+                          alt="Attachment"
+                          className="max-h-64 rounded-xl border border-kumo-line object-contain"
+                        />
+                      </div>
+                    );
+                  }
 
-                {/* Text parts */}
-                {message.parts
-                  .filter((part) => part.type === "text")
-                  .map((part, i) => {
-                    const text = (part as { type: "text"; text: string }).text;
-                    if (!text) return null;
+                  if (part.type === "text") {
+                    if (!part.text) return null;
 
                     if (isUser) {
                       return (
-                        <div key={i} className="flex justify-end">
+                        <div key={key} className="flex justify-end">
                           <div className="max-w-[85%] px-4 py-2.5 rounded-2xl rounded-br-md bg-kumo-contrast text-kumo-inverse leading-relaxed">
-                            {text}
+                            {part.text}
                           </div>
                         </div>
                       );
                     }
 
                     return (
-                      <div key={i} className="flex justify-start">
+                      <div key={key} className="flex justify-start">
                         <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-kumo-base text-kumo-default leading-relaxed">
                           <Streamdown
                             className="sd-theme rounded-2xl rounded-bl-md p-3"
@@ -845,12 +831,15 @@ function Chat() {
                             controls={false}
                             isAnimating={isLastAssistant && isStreaming}
                           >
-                            {text}
+                            {part.text}
                           </Streamdown>
                         </div>
                       </div>
                     );
-                  })}
+                  }
+
+                  return null;
+                })}
               </div>
             );
           })}
