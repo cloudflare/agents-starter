@@ -199,6 +199,29 @@ function ToolPartView({
     );
   }
 
+  // Errored
+  if (part.state === "output-error") {
+    const errorText = part.errorText;
+    return (
+      <div className="flex justify-start">
+        <Surface className="max-w-[85%] px-4 py-2.5 rounded-xl ring-2 ring-kumo-danger">
+          <div className="flex items-center gap-2 mb-1">
+            <XCircleIcon size={14} className="text-kumo-danger" />
+            <Text size="xs" variant="secondary" bold>
+              {toolName}
+            </Text>
+            <Badge variant="destructive">Error</Badge>
+          </div>
+          <div className="font-mono">
+            <Text size="xs" variant="secondary">
+              {errorText || "Tool call failed"}
+            </Text>
+          </div>
+        </Surface>
+      </div>
+    );
+  }
+
   // Executing
   if (part.state === "input-available" || part.state === "input-streaming") {
     return (
