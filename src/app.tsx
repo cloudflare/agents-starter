@@ -9,6 +9,7 @@ import {
   Button,
   Empty,
   InputArea,
+  PoweredByCloudflare,
   Surface,
   Switch,
   Text
@@ -95,6 +96,23 @@ function ThemeToggle() {
 
 // ── Tool rendering ────────────────────────────────────────────────────
 
+function ToolIO({ label, value }: { label: string; value: unknown }) {
+  if (value === undefined || value === null) return null;
+  const text =
+    typeof value === "string" ? value : JSON.stringify(value, null, 2);
+  if (!text) return null;
+  return (
+    <div className="mt-1">
+      <Text size="xs" variant="secondary" bold>
+        {label}
+      </Text>
+      <pre className="mt-0.5 font-mono text-xs text-kumo-subtle whitespace-pre-wrap overflow-auto max-h-64">
+        {text}
+      </pre>
+    </div>
+  );
+}
+
 function ToolPartView({
   part,
   addToolApprovalResponse
@@ -120,11 +138,8 @@ function ToolPartView({
             </Text>
             <Badge variant="secondary">Done</Badge>
           </div>
-          <div className="font-mono">
-            <Text size="xs" variant="secondary">
-              {JSON.stringify(part.output, null, 2)}
-            </Text>
-          </div>
+          <ToolIO label="Input" value={part.input} />
+          <ToolIO label="Output" value={part.output} />
         </Surface>
       </div>
     );
@@ -199,6 +214,29 @@ function ToolPartView({
     );
   }
 
+  // Errored
+  if (part.state === "output-error") {
+    const errorText = part.errorText;
+    return (
+      <div className="flex justify-start">
+        <Surface className="max-w-[85%] px-4 py-2.5 rounded-xl ring-2 ring-kumo-danger">
+          <div className="flex items-center gap-2 mb-1">
+            <XCircleIcon size={14} className="text-kumo-danger" />
+            <Text size="xs" variant="secondary" bold>
+              {toolName}
+            </Text>
+            <Badge variant="destructive">Error</Badge>
+          </div>
+          <div className="font-mono">
+            <Text size="xs" variant="secondary">
+              {errorText || "Tool call failed"}
+            </Text>
+          </div>
+        </Surface>
+      </div>
+    );
+  }
+
   // Executing
   if (part.state === "input-available" || part.state === "input-streaming") {
     return (
@@ -210,6 +248,7 @@ function ToolPartView({
               Running {toolName}...
             </Text>
           </div>
+          <ToolIO label="Input" value={part.input} />
         </Surface>
       </div>
     );
@@ -322,13 +361,10 @@ function Chat() {
   } = useAgentChat({
     agent,
     experimental_throttle: 100,
-    onToolCall: async (event) => {
-      if (
-        "addToolOutput" in event &&
-        event.toolCall.toolName === "getUserTimezone"
-      ) {
-        event.addToolOutput({
-          toolCallId: event.toolCall.toolCallId,
+    onToolCall: async ({ toolCall, addToolOutput }) => {
+      if (toolCall.toolName === "getUserTimezone") {
+        addToolOutput({
+          toolCallId: toolCall.toolCallId,
           output: {
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             localTime: new Date().toLocaleTimeString()
@@ -706,31 +742,25 @@ function Chat() {
                   </pre>
                 )}
 
-                {/* Tool parts */}
-                {message.parts.filter(isToolUIPart).map((part) => (
-                  <ToolPartView
-                    key={part.toolCallId}
-                    part={part}
-                    addToolApprovalResponse={addToolApprovalResponse}
-                  />
-                ))}
+                {/* Render parts in chronological (array) order */}
+                {message.parts.map((part, i) => {
+                  const key = `${message.id}-${i}`;
 
-                {/* Reasoning parts */}
-                {message.parts
-                  .filter(
-                    (part) =>
-                      part.type === "reasoning" &&
-                      (part as { text?: string }).text?.trim()
-                  )
-                  .map((part, i) => {
-                    const reasoning = part as {
-                      type: "reasoning";
-                      text: string;
-                      state?: "streaming" | "done";
-                    };
-                    const isDone = reasoning.state === "done" || !isStreaming;
+                  if (isToolUIPart(part)) {
                     return (
-                      <div key={i} className="flex justify-start">
+                      <ToolPartView
+                        key={key}
+                        part={part}
+                        addToolApprovalResponse={addToolApprovalResponse}
+                      />
+                    );
+                  }
+
+                  if (part.type === "reasoning") {
+                    if (!part.text.trim()) return null;
+                    const isDone = part.state === "done" || !isStreaming;
+                    return (
+                      <div key={key} className="flex justify-start">
                         <details className="max-w-[85%] w-full" open={!isDone}>
                           <summary className="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-sm select-none">
                             <BrainIcon size={14} className="text-purple-400" />
@@ -752,54 +782,46 @@ function Chat() {
                             />
                           </summary>
                           <pre className="mt-2 px-3 py-2 rounded-lg bg-kumo-control text-xs text-kumo-default whitespace-pre-wrap overflow-auto max-h-64">
-                            {reasoning.text}
+                            {part.text}
                           </pre>
                         </details>
                       </div>
                     );
-                  })}
+                  }
 
-                {/* Image parts */}
-                {message.parts
-                  .filter(
-                    (part): part is Extract<typeof part, { type: "file" }> =>
-                      part.type === "file" &&
-                      (part as { mediaType?: string }).mediaType?.startsWith(
-                        "image/"
-                      ) === true
-                  )
-                  .map((part, i) => (
-                    <div
-                      key={`file-${i}`}
-                      className={`flex ${isUser ? "justify-end" : "justify-start"}`}
-                    >
-                      <img
-                        src={part.url}
-                        alt="Attachment"
-                        className="max-h-64 rounded-xl border border-kumo-line object-contain"
-                      />
-                    </div>
-                  ))}
+                  if (
+                    part.type === "file" &&
+                    part.mediaType.startsWith("image/")
+                  ) {
+                    return (
+                      <div
+                        key={key}
+                        className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+                      >
+                        <img
+                          src={part.url}
+                          alt="Attachment"
+                          className="max-h-64 rounded-xl border border-kumo-line object-contain"
+                        />
+                      </div>
+                    );
+                  }
 
-                {/* Text parts */}
-                {message.parts
-                  .filter((part) => part.type === "text")
-                  .map((part, i) => {
-                    const text = (part as { type: "text"; text: string }).text;
-                    if (!text) return null;
+                  if (part.type === "text") {
+                    if (!part.text) return null;
 
                     if (isUser) {
                       return (
-                        <div key={i} className="flex justify-end">
+                        <div key={key} className="flex justify-end">
                           <div className="max-w-[85%] px-4 py-2.5 rounded-2xl rounded-br-md bg-kumo-contrast text-kumo-inverse leading-relaxed">
-                            {text}
+                            {part.text}
                           </div>
                         </div>
                       );
                     }
 
                     return (
-                      <div key={i} className="flex justify-start">
+                      <div key={key} className="flex justify-start">
                         <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-kumo-base text-kumo-default leading-relaxed">
                           <Streamdown
                             className="sd-theme rounded-2xl rounded-bl-md p-3"
@@ -807,12 +829,15 @@ function Chat() {
                             controls={false}
                             isAnimating={isLastAssistant && isStreaming}
                           >
-                            {text}
+                            {part.text}
                           </Streamdown>
                         </div>
                       </div>
                     );
-                  })}
+                  }
+
+                  return null;
+                })}
               </div>
             );
           })}
@@ -929,6 +954,9 @@ function Chat() {
             )}
           </div>
         </form>
+        <div className="flex justify-center pb-3">
+          <PoweredByCloudflare href="https://developers.cloudflare.com/agents/" />
+        </div>
       </div>
     </div>
   );

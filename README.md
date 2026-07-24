@@ -17,6 +17,14 @@ npm install
 npm run dev
 ```
 
+> **Cloudflare authentication is required to run locally.** This template uses
+> Workers AI with `"ai": { "remote": true }` in `wrangler.jsonc`, and Workers AI
+> has no local simulator — so `npm run dev` opens a remote proxy session against
+> Cloudflare and needs you to be authenticated. Either run `wrangler login` once
+> in an interactive terminal, or set a `CLOUDFLARE_API_TOKEN` environment
+> variable (e.g. in a `.env` file). No third-party (OpenAI/Anthropic) key is
+> needed, but a Cloudflare login is.
+
 Open [http://localhost:5173](http://localhost:5173) to see your agent in action.
 
 Try these prompts to see the different features:
@@ -122,7 +130,7 @@ async executeTask(description: string, task: Schedule<string>) {
 
 ### Remove scheduling
 
-If you don't need scheduling, remove `scheduleTask`, `getScheduledTasks`, and `cancelScheduledTask` from the tools object, the `executeTask` method, and the schedule-related imports (`getSchedulePrompt`, `scheduleSchema`, `Schedule`, `generateId`).
+If you don't need scheduling, remove `scheduleTask`, `getScheduledTasks`, and `cancelScheduledTask` from the tools object, the `executeTask` method, and the schedule-related imports (`getSchedulePrompt`, `scheduleSchema`, `Schedule`).
 
 ### Add state beyond chat messages
 

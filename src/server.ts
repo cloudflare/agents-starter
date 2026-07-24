@@ -14,6 +14,9 @@ import { z } from "zod";
 export class ChatAgent extends AIChatAgent<Env> {
   maxPersistedMessages = 100;
   chatRecovery = true;
+  // Wait for MCP connections to be re-established after hibernation before
+  // processing a message, so MCP tools aren't intermittently missing.
+  waitForMcpConnections = true;
 
   onStart() {
     // Configure OAuth popup behavior for MCP servers that require authentication
@@ -48,7 +51,7 @@ export class ChatAgent extends AIChatAgent<Env> {
     const workersai = createWorkersAI({ binding: this.env.AI });
 
     const result = streamText({
-      model: workersai("@cf/moonshotai/kimi-k2.6", {
+      model: workersai("@cf/moonshotai/kimi-k2.7-code", {
         sessionAffinity: this.sessionAffinity
       }),
       system: `You are a helpful assistant that can understand images. You can check the weather, get the user's timezone, run calculations, and schedule tasks. When users share images, describe what you see and answer questions about them.
@@ -56,10 +59,11 @@ export class ChatAgent extends AIChatAgent<Env> {
 ${getSchedulePrompt({ date: new Date() })}
 
 If the user asks to schedule a task, use the schedule tool to schedule the task.`,
-      // Prune old tool calls to save tokens on long conversations
+      // Prune old tool calls and reasoning to save tokens on long conversations
       messages: pruneMessages({
         messages: await convertToModelMessages(this.messages),
-        toolCalls: "before-last-2-messages"
+        toolCalls: "before-last-2-messages",
+        reasoning: "before-last-message"
       }),
       tools: {
         // MCP tools from connected servers
@@ -175,7 +179,7 @@ If the user asks to schedule a task, use the schedule tool to schedule the task.
           }
         })
       },
-      stopWhen: stepCountIs(5),
+      stopWhen: stepCountIs(20),
       abortSignal: options?.abortSignal
     });
 
